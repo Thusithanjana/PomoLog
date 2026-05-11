@@ -1,0 +1,251 @@
+.app {
+  max-width: 980px;
+  margin: 0 auto;
+  display: grid;
+  gap: 16px;
+}
+
+header {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand-logo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+header h1 {
+  font-size: 22px;
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+
+header .date {
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+}
+
+.controls {
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+label {
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+textarea {
+  width: 100%;
+  min-height: 90px;
+  resize: vertical;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--muted);
+  color: var(--ink);
+  font-size: 15px;
+  margin-top: 6px;
+}
+
+textarea:disabled {
+  opacity: 0.6;
+  background: #e5e7eb;
+  cursor: not-allowed;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.row .left,
+.row .right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+button {
+  appearance: none;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.04s ease, box-shadow 0.2s ease, background 0.2s ease;
+  box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25);
+}
+
+button.secondary {
+  background: #111827;
+  box-shadow: 0 6px 18px rgba(17, 24, 39, 0.18);
+}
+
+button.ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+button:active {
+  transform: translateY(1px);
+}
+
+button.running {
+  background: var(--danger);
+}
+
+#callBtn {
+  background: var(--success);
+}
+
+#callBtn.active {
+  background: var(--danger);
+}
+
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+thead th {
+  text-align: left;
+  font-size: 13px;
+  color: var(--ink-soft);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  background: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid var(--border);
+  padding: 12px 10px;
+}
+
+tbody td {
+  padding: 12px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.table-wrap {
+  overflow: auto;
+  border-top-left-radius: var(--radius);
+  border-top-right-radius: var(--radius);
+}
+
+.footer-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  background: linear-gradient(180deg, #ffffff, #f9fafb);
+  border-bottom-left-radius: var(--radius);
+  border-bottom-right-radius: var(--radius);
+}
+
+.hint {
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.pill {
+  padding: 4px 8px;
+  background: #e0e7ff;
+  color: #1e3a8a;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.dialog {
+  width: min(600px, 100%);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 16px 48px rgba(15, 23, 42, 0.2);
+  padding: 16px;
+}
+
+.dialog h2 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 16px;
+  }
+
+  .brand-logo {
+    width: 36px;
+    height: 36px;
+  }
+
+  .footer-actions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
