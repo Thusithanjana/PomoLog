@@ -1,4 +1,10 @@
-export function BreakModal({ onShortBreak, onLongBreak, onSkip, onContinue }) {
+export function BreakModal({
+  onShortBreak,
+  onLongBreak,
+  onSkip,
+  onContinue,
+  focusMinutes = 25,
+}) {
   return (
     <div className="dialog-backdrop" role="presentation">
       <div
@@ -8,7 +14,9 @@ export function BreakModal({ onShortBreak, onLongBreak, onSkip, onContinue }) {
         aria-labelledby="break-title"
       >
         <h2 id="break-title">🍅 Pomodoro Complete!</h2>
-        <p className="break-message">You've completed a 25-minute focus session.</p>
+        <p className="break-message">
+          You've completed a {focusMinutes}-minute focus session.
+        </p>
 
         <div className="break-options">
           <button type="button" onClick={onShortBreak}>

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { AppHeader } from './components/AppHeader'
 import { BreakModal } from './components/BreakModal'
@@ -12,6 +12,7 @@ import { usePomodoroTimer } from './hooks/usePomodoroTimer'
 import { useTaskTimer } from './hooks/useTaskTimer'
 import { downloadCsv } from './utils/csv'
 import { notifyTimerComplete } from './utils/notification'
+import { msToMMSS } from './utils/pomodoro'
 
 function App() {
   const {
@@ -22,6 +23,7 @@ function App() {
     description,
     status,
     usePomodo,
+    pomodoroFocusMinutes,
     isTaskRunning,
     isCallRunning,
     isAnyRunning,
@@ -33,6 +35,7 @@ function App() {
     updateTaskDescription,
     setStatus,
     setUsePomodo,
+    setPomodoroFocusMinutes,
     addBreakToSession,
     startNewPomodoroSession,
   } = useTaskTimer()
@@ -40,7 +43,6 @@ function App() {
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [showBreakModal, setShowBreakModal] = useState(false)
   const [showConcurrentWarning, setShowConcurrentWarning] = useState(false)
-  const [pendingNewTaskUsePomodo, setPendingNewTaskUsePomodo] = useState(false)
 
   const nowMs = useNowTicker(isAnyRunning)
 
@@ -58,11 +60,29 @@ function App() {
     isTaskRunning && runningTask?.usePomodo,
     useCallback(() => {
       if (isTaskRunning && runningTask?.usePomodo) {
-          notifyTimerComplete(runningTask?.description)
+        notifyTimerComplete(runningTask?.description)
         setShowBreakModal(true)
       }
     }, [isTaskRunning, runningTask]),
+    runningTask?.pomodoroFocusMinutes ?? pomodoroFocusMinutes,
   )
+
+  useEffect(() => {
+    const baseTitle = 'PromoLog'
+
+    if (isTaskRunning && runningTask?.usePomodo) {
+      const phase = pomodoroTimer.isBreakTime ? 'Break' : 'Focus'
+      document.title = `${msToMMSS(pomodoroTimer.timeRemaining)} ${phase} | ${baseTitle}`
+      return
+    }
+
+    document.title = baseTitle
+  }, [
+    isTaskRunning,
+    runningTask,
+    pomodoroTimer.isBreakTime,
+    pomodoroTimer.timeRemaining,
+  ])
 
   const handleToggleTask = useCallback(() => {
     if (isTaskRunning) {
@@ -70,14 +90,18 @@ function App() {
       return
     }
 
-    // Check if there's already a running task and Pomodoro is enabled
-    if (isTaskRunning && pendingNewTaskUsePomodo) {
-      setShowConcurrentWarning(true)
-      return
-    }
-
     startTask()
-  }, [isTaskRunning, pendingNewTaskUsePomodo, startTask, stopTask])
+  }, [isTaskRunning, startTask, stopTask])
+
+  const handleFocusMinutesChange = useCallback(
+    (value) => {
+      const parsed = Number.parseInt(value, 10)
+      if (Number.isNaN(parsed)) return
+      const clamped = Math.min(180, Math.max(1, parsed))
+      setPomodoroFocusMinutes(clamped)
+    },
+    [setPomodoroFocusMinutes],
+  )
 
   const handleToggleCall = () => {
     if (isCallRunning) {
@@ -179,6 +203,8 @@ function App() {
           isCallRunning={isCallRunning}
           usePomodo={usePomodo}
           onTogglePomodo={setUsePomodo}
+          pomodoroFocusMinutes={pomodoroFocusMinutes}
+          onPomodoroFocusMinutesChange={handleFocusMinutesChange}
         />
 
         {isTaskRunning && runningTask?.usePomodo && (
@@ -216,6 +242,7 @@ function App() {
           onLongBreak={handleBreakLong}
           onSkip={handleBreakSkip}
           onContinue={handleBreakContinue}
+          focusMinutes={runningTask?.pomodoroFocusMinutes ?? pomodoroFocusMinutes}
         />
       )}
 

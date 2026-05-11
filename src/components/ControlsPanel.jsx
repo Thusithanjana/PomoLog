@@ -8,6 +8,8 @@ export function ControlsPanel({
   isCallRunning,
   usePomodo,
   onTogglePomodo,
+  pomodoroFocusMinutes,
+  onPomodoroFocusMinutesChange,
 }) {
   return (
     <div className="controls">
@@ -31,8 +33,22 @@ export function ControlsPanel({
             onChange={(event) => onTogglePomodo(event.target.checked)}
             disabled={isTaskRunning}
           />
-          <span>🍅 Pomodoro Timer (25 min focus)</span>
+          <span>🍅 Pomodoro Timer ({pomodoroFocusMinutes} min focus)</span>
         </label>
+      </div>
+
+      <div className="pomodo-config">
+        <label htmlFor="pomodoro-focus-minutes">Focus Minutes</label>
+        <input
+          id="pomodoro-focus-minutes"
+          type="number"
+          min={1}
+          max={180}
+          step={1}
+          value={pomodoroFocusMinutes}
+          onChange={(event) => onPomodoroFocusMinutesChange(event.target.value)}
+          disabled={isTaskRunning || !usePomodo}
+        />
       </div>
 
       <div className="row">

@@ -1,11 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { POMODORO_PRESETS } from '../utils/pomodoro'
 
-export function usePomodoroTimer(isTaskRunning, onBreakRequired) {
-  const [timeRemaining, setTimeRemaining] = useState(POMODORO_PRESETS.FOCUS)
+export function usePomodoroTimer(isTaskRunning, onBreakRequired, focusMinutes = 25) {
+  const focusDurationMs = Math.max(1, focusMinutes) * 60 * 1000
+  const [timeRemaining, setTimeRemaining] = useState(focusDurationMs)
   const [isBreakTime, setIsBreakTime] = useState(false)
   const [breakDuration, setBreakDuration] = useState(null)
   const [hasCompleted, setHasCompleted] = useState(false)
+
+  useEffect(() => {
+    if (isTaskRunning || isBreakTime) return
+    setTimeRemaining(focusDurationMs)
+  }, [focusDurationMs, isTaskRunning, isBreakTime])
 
   // Main timer countdown
   useEffect(() => {
@@ -46,16 +52,16 @@ export function usePomodoroTimer(isTaskRunning, onBreakRequired) {
     // Start another focus session
     setIsBreakTime(false)
     setBreakDuration(null)
-    setTimeRemaining(POMODORO_PRESETS.FOCUS)
+    setTimeRemaining(focusDurationMs)
     setHasCompleted(false)
-  }, [])
+  }, [focusDurationMs])
 
   const resetTimer = useCallback(() => {
-    setTimeRemaining(POMODORO_PRESETS.FOCUS)
+    setTimeRemaining(focusDurationMs)
     setIsBreakTime(false)
     setBreakDuration(null)
     setHasCompleted(false)
-  }, [])
+  }, [focusDurationMs])
 
   return {
     timeRemaining,

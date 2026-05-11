@@ -281,6 +281,33 @@ tbody tr:last-child td {
   cursor: not-allowed;
 }
 
+.pomodo-config {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+}
+
+.pomodo-config label {
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.pomodo-config input {
+  width: 92px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--muted);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.pomodo-config input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .break-message {
   margin: 0 0 16px;
   color: var(--ink);
@@ -316,6 +343,10 @@ tbody tr:last-child td {
 
   .pomodoro-time {
     font-size: 28px;
+  }
+
+  .pomodo-config {
+    padding: 0;
   }
 }
 

@@ -9,6 +9,7 @@ const initialState = {
   description: '',
   status: 'Ready',
   usePomodo: true,
+  pomodoroFocusMinutes: 25,
 }
 
 function reducer(state, action) {
@@ -33,6 +34,7 @@ function reducer(state, action) {
         startISO: action.payload.startISO,
         endISO: null,
         usePomodo: action.payload.usePomodo ?? false,
+        pomodoroFocusMinutes: action.payload.pomodoroFocusMinutes ?? 25,
         pomodoroSessions: action.payload.usePomodo ? [{ startISO: action.payload.startISO, endISO: null, breaks: [] }] : [],
         totalBreakTime: 0,
       }
@@ -170,6 +172,10 @@ function reducer(state, action) {
       return { ...state, usePomodo: action.payload }
     }
 
+    case 'SET_POMODORO_FOCUS_MINUTES': {
+      return { ...state, pomodoroFocusMinutes: action.payload }
+    }
+
     default:
       return state
   }
@@ -224,9 +230,10 @@ export function useTaskTimer() {
         description: state.description.trim(),
         startISO: nowISO(),
         usePomodo: state.usePomodo ?? false,
+        pomodoroFocusMinutes: state.pomodoroFocusMinutes,
       },
     })
-  }, [state.description, state.usePomodo])
+  }, [state.description, state.usePomodo, state.pomodoroFocusMinutes])
 
   const stopTask = useCallback(() => {
     dispatch({ type: 'STOP_TASK', payload: { endISO: nowISO() } })
@@ -259,6 +266,10 @@ export function useTaskTimer() {
 
   const setUsePomodo = useCallback((value) => {
     dispatch({ type: 'SET_USE_POMODO', payload: value })
+  }, [])
+
+  const setPomodoroFocusMinutes = useCallback((value) => {
+    dispatch({ type: 'SET_POMODORO_FOCUS_MINUTES', payload: value })
   }, [])
 
   const addBreakToSession = useCallback((breakType, duration) => {
@@ -298,6 +309,7 @@ export function useTaskTimer() {
     updateTaskDescription,
     setStatus,
     setUsePomodo,
+    setPomodoroFocusMinutes,
     addBreakToSession,
     startNewPomodoroSession,
   }
