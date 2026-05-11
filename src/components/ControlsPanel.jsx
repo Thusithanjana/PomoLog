@@ -6,6 +6,8 @@ export function ControlsPanel({
   onSaveCsv,
   isTaskRunning,
   isCallRunning,
+  usePomodo,
+  onTogglePomodo,
 }) {
   return (
     <div className="controls">
@@ -18,6 +20,19 @@ export function ControlsPanel({
           placeholder="What are you working on?"
           disabled={isTaskRunning}
         />
+      </div>
+
+      <div className="pomodo-toggle">
+        <label htmlFor="pomodo-checkbox">
+          <input
+            id="pomodo-checkbox"
+            type="checkbox"
+            checked={usePomodo}
+            onChange={(event) => onTogglePomodo(event.target.checked)}
+            disabled={isTaskRunning}
+          />
+          <span>🍅 Pomodoro Timer (25 min focus)</span>
+        </label>
       </div>
 
       <div className="row">

@@ -8,6 +8,7 @@ const initialState = {
   runningCallId: null,
   description: '',
   status: 'Ready',
+  usePomodo: true,
 }
 
 function reducer(state, action) {
@@ -31,6 +32,9 @@ function reducer(state, action) {
         description: action.payload.description,
         startISO: action.payload.startISO,
         endISO: null,
+        usePomodo: action.payload.usePomodo ?? false,
+        pomodoroSessions: action.payload.usePomodo ? [{ startISO: action.payload.startISO, endISO: null, breaks: [] }] : [],
+        totalBreakTime: 0,
       }
 
       return {
@@ -102,8 +106,68 @@ function reducer(state, action) {
       }
     }
 
+    case 'ADD_BREAK_TO_SESSION': {
+      const updatedTasks = state.tasks.map((task) => {
+        if (task.id !== state.runningId) return task
+
+        const sessions = [...(task.pomodoroSessions || [])]
+        if (sessions.length > 0) {
+          const lastSession = sessions[sessions.length - 1]
+          sessions[sessions.length - 1] = {
+            ...lastSession,
+            breaks: [
+              ...lastSession.breaks,
+              {
+                type: action.payload.breakType,
+                duration: action.payload.duration,
+                startISO: action.payload.startISO,
+              },
+            ],
+          }
+        }
+
+        return {
+          ...task,
+          pomodoroSessions: sessions,
+          totalBreakTime: (task.totalBreakTime || 0) + action.payload.duration,
+        }
+      })
+
+      return {
+        ...state,
+        tasks: updatedTasks,
+      }
+    }
+
+    case 'START_NEW_POMODORO_SESSION': {
+      const updatedTasks = state.tasks.map((task) => {
+        if (task.id !== state.runningId) return task
+
+        return {
+          ...task,
+          pomodoroSessions: [
+            ...(task.pomodoroSessions || []),
+            {
+              startISO: action.payload.startISO,
+              endISO: null,
+              breaks: [],
+            },
+          ],
+        }
+      })
+
+      return {
+        ...state,
+        tasks: updatedTasks,
+      }
+    }
+
     case 'SET_STATUS': {
       return { ...state, status: action.payload }
+    }
+
+    case 'SET_USE_POMODO': {
+      return { ...state, usePomodo: action.payload }
     }
 
     default:
@@ -159,9 +223,10 @@ export function useTaskTimer() {
         id: uid(),
         description: state.description.trim(),
         startISO: nowISO(),
+        usePomodo: state.usePomodo ?? false,
       },
     })
-  }, [state.description])
+  }, [state.description, state.usePomodo])
 
   const stopTask = useCallback(() => {
     dispatch({ type: 'STOP_TASK', payload: { endISO: nowISO() } })
@@ -192,6 +257,28 @@ export function useTaskTimer() {
     dispatch({ type: 'SET_STATUS', payload: value })
   }, [])
 
+  const setUsePomodo = useCallback((value) => {
+    dispatch({ type: 'SET_USE_POMODO', payload: value })
+  }, [])
+
+  const addBreakToSession = useCallback((breakType, duration) => {
+    dispatch({
+      type: 'ADD_BREAK_TO_SESSION',
+      payload: {
+        breakType,
+        duration,
+        startISO: nowISO(),
+      },
+    })
+  }, [])
+
+  const startNewPomodoroSession = useCallback(() => {
+    dispatch({
+      type: 'START_NEW_POMODORO_SESSION',
+      payload: { startISO: nowISO() },
+    })
+  }, [])
+
   const isTaskRunning = Boolean(state.runningId)
   const isCallRunning = Boolean(state.runningCallId)
 
@@ -210,5 +297,8 @@ export function useTaskTimer() {
     stopCall,
     updateTaskDescription,
     setStatus,
+    setUsePomodo,
+    addBreakToSession,
+    startNewPomodoroSession,
   }
 }

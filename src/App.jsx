@@ -1,12 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import './App.css'
 import { AppHeader } from './components/AppHeader'
+import { BreakModal } from './components/BreakModal'
+import { ConcurrentTaskWarning } from './components/ConcurrentTaskWarning'
 import { ControlsPanel } from './components/ControlsPanel'
 import { EditTaskDialog } from './components/EditTaskDialog'
+import { PomodoroTimerDisplay } from './components/PomodoroTimerDisplay'
 import { TaskTable } from './components/TaskTable'
 import { useNowTicker } from './hooks/useNowTicker'
+import { usePomodoroTimer } from './hooks/usePomodoroTimer'
 import { useTaskTimer } from './hooks/useTaskTimer'
 import { downloadCsv } from './utils/csv'
+import { notifyTimerComplete } from './utils/notification'
 
 function App() {
   const {
@@ -16,6 +21,7 @@ function App() {
     runningCallId,
     description,
     status,
+    usePomodo,
     isTaskRunning,
     isCallRunning,
     isAnyRunning,
@@ -26,24 +32,52 @@ function App() {
     stopCall,
     updateTaskDescription,
     setStatus,
+    setUsePomodo,
+    addBreakToSession,
+    startNewPomodoroSession,
   } = useTaskTimer()
 
   const [editingTaskId, setEditingTaskId] = useState(null)
+  const [showBreakModal, setShowBreakModal] = useState(false)
+  const [showConcurrentWarning, setShowConcurrentWarning] = useState(false)
+  const [pendingNewTaskUsePomodo, setPendingNewTaskUsePomodo] = useState(false)
+
   const nowMs = useNowTicker(isAnyRunning)
+
+  const runningTask = useMemo(
+    () => tasks.find((task) => task.id === runningId),
+    [tasks, runningId],
+  )
 
   const editingTask = useMemo(
     () => tasks.find((task) => task.id === editingTaskId) ?? null,
     [tasks, editingTaskId],
   )
 
-  const handleToggleTask = () => {
+  const pomodoroTimer = usePomodoroTimer(
+    isTaskRunning && runningTask?.usePomodo,
+    useCallback(() => {
+      if (isTaskRunning && runningTask?.usePomodo) {
+          notifyTimerComplete(runningTask?.description)
+        setShowBreakModal(true)
+      }
+    }, [isTaskRunning, runningTask]),
+  )
+
+  const handleToggleTask = useCallback(() => {
     if (isTaskRunning) {
       stopTask()
       return
     }
 
+    // Check if there's already a running task and Pomodoro is enabled
+    if (isTaskRunning && pendingNewTaskUsePomodo) {
+      setShowConcurrentWarning(true)
+      return
+    }
+
     startTask()
-  }
+  }, [isTaskRunning, pendingNewTaskUsePomodo, startTask, stopTask])
 
   const handleToggleCall = () => {
     if (isCallRunning) {
@@ -74,6 +108,62 @@ function App() {
     setEditingTaskId(null)
   }
 
+  const handleBreakShort = () => {
+    if (!runningTask) return
+
+    addBreakToSession('short', 5 * 60 * 1000)
+    stopTask()
+    setShowBreakModal(false)
+    pomodoroTimer.selectBreak('short')
+
+    // After break, task stays paused until user manually resumes
+    setStatus('Short break started. Resume task when ready.')
+  }
+
+  const handleBreakLong = () => {
+    if (!runningTask) return
+
+    addBreakToSession('long', 45 * 60 * 1000)
+    stopTask()
+    setShowBreakModal(false)
+    pomodoroTimer.selectBreak('long')
+
+    setStatus('Long break started. Resume task when ready.')
+  }
+
+  const handleBreakSkip = () => {
+    if (!runningTask) return
+
+    stopTask()
+    setShowBreakModal(false)
+    pomodoroTimer.skipBreak()
+    startNewPomodoroSession()
+
+    setStatus('Starting another Pomodoro session...')
+  }
+
+  const handleBreakContinue = () => {
+    setShowBreakModal(false)
+    pomodoroTimer.resetTimer()
+    setStatus('Task resumed without break.')
+  }
+
+  const handleConcurrentPause = () => {
+    stopTask()
+    setShowConcurrentWarning(false)
+    startTask()
+  }
+
+  const handleConcurrentStop = () => {
+    stopTask()
+    setShowConcurrentWarning(false)
+    startTask()
+  }
+
+  const handleConcurrentCancel = () => {
+    setShowConcurrentWarning(false)
+  }
+
   return (
     <div className="app">
       <AppHeader />
@@ -87,7 +177,16 @@ function App() {
           onSaveCsv={handleSaveCsv}
           isTaskRunning={isTaskRunning}
           isCallRunning={isCallRunning}
+          usePomodo={usePomodo}
+          onTogglePomodo={setUsePomodo}
         />
+
+        {isTaskRunning && runningTask?.usePomodo && (
+          <PomodoroTimerDisplay
+            timeRemaining={pomodoroTimer.timeRemaining}
+            isBreakTime={pomodoroTimer.isBreakTime}
+          />
+        )}
 
         <TaskTable
           rows={rows}
@@ -96,6 +195,7 @@ function App() {
           runningCallId={runningCallId}
           nowMs={nowMs}
           onEdit={handleEditOpen}
+          tasks={tasks}
         />
 
         <div className="footer-actions">
@@ -109,6 +209,24 @@ function App() {
         onCancel={handleEditCancel}
         onSave={handleEditSave}
       />
+
+      {showBreakModal && (
+        <BreakModal
+          onShortBreak={handleBreakShort}
+          onLongBreak={handleBreakLong}
+          onSkip={handleBreakSkip}
+          onContinue={handleBreakContinue}
+        />
+      )}
+
+      {showConcurrentWarning && (
+        <ConcurrentTaskWarning
+          runningTaskDescription={runningTask?.description}
+          onPauseAndStart={handleConcurrentPause}
+          onStopAndStart={handleConcurrentStop}
+          onCancel={handleConcurrentCancel}
+        />
+      )}
     </div>
   )
 }

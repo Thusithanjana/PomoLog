@@ -1,4 +1,5 @@
 import { durationBetween, fmtTime } from '../utils/time'
+import { formatPomodoroStats } from '../utils/pomodoro'
 
 export function TaskTable({
   rows,
@@ -7,6 +8,7 @@ export function TaskTable({
   runningCallId,
   nowMs,
   onEdit,
+  tasks,
 }) {
   return (
     <div className="table-wrap">
@@ -33,13 +35,19 @@ export function TaskTable({
               nowMs,
             )
 
+            // Show Pomodoro stats breakdown if applicable
+            const pomodoroStats = formatPomodoroStats(task)
+            const displayDuration = pomodoroStats
+              ? `Focus: ${pomodoroStats.focus}m | Breaks: ${pomodoroStats.breaks}m | Total: ${pomodoroStats.total}m`
+              : duration
+
             return (
               <tr key={task.id}>
                 <td>{no}</td>
                 <td>{task.description || ''}</td>
                 <td>{fmtTime(task.startISO)}</td>
                 <td>{fmtTime(task.endISO)}</td>
-                <td className="nowrap">{duration}</td>
+                <td className="nowrap">{displayDuration}</td>
                 <td>
                   <button
                     type="button"
