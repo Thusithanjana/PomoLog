@@ -6,9 +6,7 @@ export function AppHeader() {
     <header>
       <div className="brand">
         <img className="brand-logo" src={logo} alt="PromoLog logo" />
-        <h1>
-          <span className="pill">PromoLog</span>
-        </h1>
+        <h1>PromoLog</h1>
       </div>
       <div className="date">{fmtDate(new Date())}</div>
     </header>

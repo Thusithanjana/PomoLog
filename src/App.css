@@ -19,19 +19,22 @@ header {
 .brand {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .brand-logo {
-  width: 42px;
-  height: 42px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
+  flex-shrink: 0;
 }
 
 header h1 {
-  font-size: 22px;
+  font-size: 24px;
   margin: 0;
   letter-spacing: 0.2px;
+  font-weight: 700;
+  color: var(--ink);
 }
 
 header .date {
@@ -239,8 +242,12 @@ tbody tr:last-child td {
   }
 
   .brand-logo {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
+  }
+
+  header h1 {
+    font-size: 20px;
   }
 
   .footer-actions {
