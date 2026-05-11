@@ -4,10 +4,7 @@ import { fmtDate } from '../utils/time'
 export function AppHeader() {
   return (
     <header>
-      <div className="brand">
-        <img className="brand-logo" src={logo} alt="PromoLog logo" />
-        <h1>PromoLog</h1>
-      </div>
+      <img className="brand-logo" src={logo} alt="PromoLog" title="PromoLog" />
       <div className="date">{fmtDate(new Date())}</div>
     </header>
   )
