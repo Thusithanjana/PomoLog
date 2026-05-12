@@ -44,6 +44,7 @@ function App() {
 
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [showBreakModal, setShowBreakModal] = useState(false)
+  const [breakModalMode, setBreakModalMode] = useState('auto')
   const [showBreakFinishedModal, setShowBreakFinishedModal] = useState(false)
   const [showConcurrentWarning, setShowConcurrentWarning] = useState(false)
   const [breakTaskId, setBreakTaskId] = useState(null)
@@ -82,11 +83,18 @@ function App() {
 
       if (isTaskRunning && runningTask?.usePomodo) {
         notifyTimerComplete(runningTask?.description)
+        setBreakModalMode('auto')
         setShowBreakModal(true)
       }
     }, [isTaskRunning, runningTask, breakTaskId, breakTask, setStatus]),
     activeFocusMinutes,
   )
+
+  const handleTakeBreak = useCallback(() => {
+    if (!isTaskRunning || !runningTask?.usePomodo) return
+    setBreakModalMode('manual')
+    setShowBreakModal(true)
+  }, [isTaskRunning, runningTask])
 
   useEffect(() => {
     const baseTitle = 'PromoLog'
@@ -204,6 +212,12 @@ function App() {
   }
 
   const handleBreakSkip = () => {
+    if (breakModalMode === 'manual') {
+      setShowBreakModal(false)
+      setStatus('Continuing current task.')
+      return
+    }
+
     if (!runningTask) return
 
     setBreakTaskId(null)
@@ -216,6 +230,12 @@ function App() {
   }
 
   const handleBreakContinue = () => {
+    if (breakModalMode === 'manual') {
+      setShowBreakModal(false)
+      setStatus('Continuing current task.')
+      return
+    }
+
     setBreakTaskId(null)
     setShowBreakModal(false)
     pomodoroTimer.resetTimer()
@@ -262,10 +282,12 @@ function App() {
           description={description}
           onDescriptionChange={setDescription}
           onToggleTask={handleToggleTask}
+          onTakeBreak={handleTakeBreak}
           onToggleCall={handleToggleCall}
           onSaveCsv={handleSaveCsv}
           isTaskRunning={isTaskRunning}
           isCallRunning={isCallRunning}
+          canTakeBreak={isTaskRunning && runningTask?.usePomodo && !pomodoroTimer.isBreakTime}
           usePomodo={usePomodo}
           onTogglePomodo={setUsePomodo}
           pomodoroFocusMinutes={pomodoroFocusMinutes}
@@ -317,6 +339,7 @@ function App() {
           onSkip={handleBreakSkip}
           onContinue={handleBreakContinue}
           focusMinutes={runningTask?.pomodoroFocusMinutes ?? pomodoroFocusMinutes}
+          mode={breakModalMode}
         />
       )}
 

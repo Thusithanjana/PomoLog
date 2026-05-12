@@ -4,7 +4,10 @@ export function BreakModal({
   onSkip,
   onContinue,
   focusMinutes = 25,
+  mode = 'auto',
 }) {
+  const isManual = mode === 'manual'
+
   return (
     <div className="dialog-backdrop" role="presentation">
       <div
@@ -13,9 +16,11 @@ export function BreakModal({
         aria-modal="true"
         aria-labelledby="break-title"
       >
-        <h2 id="break-title">🍅 Pomodoro Complete!</h2>
+        <h2 id="break-title">{isManual ? 'Take a Break' : '🍅 Pomodoro Complete!'}</h2>
         <p className="break-message">
-          You've completed a {focusMinutes}-minute focus session.
+          {isManual
+            ? 'Pause this task and choose a break length.'
+            : `You've completed a ${focusMinutes}-minute focus session.`}
         </p>
 
         <div className="break-options">
@@ -26,7 +31,7 @@ export function BreakModal({
             🌳 Long Break (45 min)
           </button>
           <button type="button" className="ghost" onClick={onSkip}>
-            ⏭️ Skip Break
+            {isManual ? 'Cancel' : '⏭️ Skip Break'}
           </button>
         </div>
 
@@ -37,7 +42,7 @@ export function BreakModal({
             onClick={onContinue}
             style={{ fontSize: '12px' }}
           >
-            Continue Without Break
+            {isManual ? 'Keep Working' : 'Continue Without Break'}
           </button>
         </div>
       </div>

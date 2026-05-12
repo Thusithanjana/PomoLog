@@ -2,10 +2,12 @@ export function ControlsPanel({
   description,
   onDescriptionChange,
   onToggleTask,
+  onTakeBreak,
   onToggleCall,
   onSaveCsv,
   isTaskRunning,
   isCallRunning,
+  canTakeBreak,
   usePomodo,
   onTogglePomodo,
   pomodoroFocusMinutes,
@@ -64,6 +66,12 @@ export function ControlsPanel({
         </div>
 
         <div className="right">
+          {canTakeBreak && (
+            <button type="button" className="ghost" onClick={onTakeBreak}>
+              Take Break
+            </button>
+          )}
+
           <button
             type="button"
             className={isTaskRunning ? 'running' : ''}
