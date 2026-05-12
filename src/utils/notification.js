@@ -96,7 +96,7 @@ export function notifyTimerComplete(taskDescription) {
   vibrateDevice()
   showNotification('🍅 Pomodoro Complete!', {
     body: `Your ${taskDescription ? `"${taskDescription}"` : 'task'} session is complete. Time for a break!`,
-    icon: '/src/assets/logo.png',
+    icon: '/src/assets/logo_square.png',
     tag: 'pomodoro-complete',
   })
 }
