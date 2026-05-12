@@ -3,11 +3,13 @@ export function ControlsPanel({
   onDescriptionChange,
   onToggleTask,
   onTakeBreak,
+  onResumeDuringBreak,
   onToggleCall,
   onSaveCsv,
   isTaskRunning,
   isCallRunning,
   canTakeBreak,
+  canResumeDuringBreak,
   usePomodo,
   onTogglePomodo,
   pomodoroFocusMinutes,
@@ -69,6 +71,12 @@ export function ControlsPanel({
           {canTakeBreak && (
             <button type="button" className="ghost" onClick={onTakeBreak}>
               Take Break
+            </button>
+          )}
+
+          {canResumeDuringBreak && (
+            <button type="button" className="ghost" onClick={onResumeDuringBreak}>
+              Resume Task
             </button>
           )}
 

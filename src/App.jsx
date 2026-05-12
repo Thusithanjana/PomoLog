@@ -40,6 +40,7 @@ function App() {
     setPomodoroFocusMinutes,
     addBreakToSession,
     startNewPomodoroSession,
+    updateLastBreakDuration,
   } = useTaskTimer()
 
   const [editingTaskId, setEditingTaskId] = useState(null)
@@ -119,18 +120,46 @@ function App() {
     pomodoroTimer.timeRemaining,
   ])
 
+  const finalizeBreakDuration = useCallback(() => {
+    if (!breakTaskId || !pomodoroTimer.breakDuration) return
+
+    const planned = pomodoroTimer.breakDuration.ms || 0
+    const elapsed = Math.max(0, planned - pomodoroTimer.timeRemaining)
+    const normalizedElapsed = Math.min(planned, elapsed)
+
+    updateLastBreakDuration(breakTaskId, normalizedElapsed)
+  }, [
+    breakTaskId,
+    pomodoroTimer.breakDuration,
+    pomodoroTimer.timeRemaining,
+    updateLastBreakDuration,
+  ])
+
+  const resumeBreakTaskNow = useCallback(() => {
+    if (!breakTaskId) return
+
+    finalizeBreakDuration()
+    resumeTask(breakTaskId)
+    setBreakTaskId(null)
+    pomodoroTimer.resetTimer()
+    setShowBreakFinishedModal(false)
+    setStatus('Task resumed after break.')
+  }, [
+    breakTaskId,
+    finalizeBreakDuration,
+    resumeTask,
+    pomodoroTimer,
+    setStatus,
+  ])
+
   const handleToggleTask = useCallback(() => {
     if (isTaskRunning) {
       stopTask()
       return
     }
 
-    if (breakTaskId && pomodoroTimer.isBreakTime && pomodoroTimer.timeRemaining <= 0) {
-      resumeTask(breakTaskId)
-      setBreakTaskId(null)
-      pomodoroTimer.resetTimer()
-      setShowBreakFinishedModal(false)
-      setStatus('Task resumed after break.')
+    if (breakTaskId && pomodoroTimer.isBreakTime) {
+      resumeBreakTaskNow()
       return
     }
 
@@ -139,10 +168,7 @@ function App() {
     isTaskRunning,
     breakTaskId,
     pomodoroTimer.isBreakTime,
-    pomodoroTimer.timeRemaining,
-    resumeTask,
-    pomodoroTimer,
-    setStatus,
+    resumeBreakTaskNow,
     startTask,
     stopTask,
   ])
@@ -243,13 +269,11 @@ function App() {
   }
 
   const handleBreakResumeNow = () => {
-    if (!breakTaskId) return
+    resumeBreakTaskNow()
+  }
 
-    resumeTask(breakTaskId)
-    setShowBreakFinishedModal(false)
-    setBreakTaskId(null)
-    pomodoroTimer.resetTimer()
-    setStatus('Task resumed after break.')
+  const handleResumeDuringBreak = () => {
+    resumeBreakTaskNow()
   }
 
   const handleBreakResumeLater = () => {
@@ -283,11 +307,13 @@ function App() {
           onDescriptionChange={setDescription}
           onToggleTask={handleToggleTask}
           onTakeBreak={handleTakeBreak}
+          onResumeDuringBreak={handleResumeDuringBreak}
           onToggleCall={handleToggleCall}
           onSaveCsv={handleSaveCsv}
           isTaskRunning={isTaskRunning}
           isCallRunning={isCallRunning}
           canTakeBreak={isTaskRunning && runningTask?.usePomodo && !pomodoroTimer.isBreakTime}
+          canResumeDuringBreak={!isTaskRunning && pomodoroTimer.isBreakTime && Boolean(breakTaskId)}
           usePomodo={usePomodo}
           onTogglePomodo={setUsePomodo}
           pomodoroFocusMinutes={pomodoroFocusMinutes}

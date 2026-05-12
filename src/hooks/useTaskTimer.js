@@ -171,6 +171,44 @@ function reducer(state, action) {
       }
     }
 
+    case 'UPDATE_LAST_BREAK_DURATION': {
+      const updatedTasks = state.tasks.map((task) => {
+        if (task.id !== action.payload.taskId) return task
+
+        const sessions = [...(task.pomodoroSessions || [])]
+        if (sessions.length === 0) return task
+
+        const lastSessionIndex = sessions.length - 1
+        const lastSession = sessions[lastSessionIndex]
+        const breaks = [...(lastSession.breaks || [])]
+        if (breaks.length === 0) return task
+
+        const lastBreakIndex = breaks.length - 1
+        const previousDuration = breaks[lastBreakIndex].duration || 0
+        breaks[lastBreakIndex] = {
+          ...breaks[lastBreakIndex],
+          duration: action.payload.duration,
+        }
+
+        sessions[lastSessionIndex] = {
+          ...lastSession,
+          breaks,
+        }
+
+        return {
+          ...task,
+          pomodoroSessions: sessions,
+          totalBreakTime:
+            (task.totalBreakTime || 0) - previousDuration + action.payload.duration,
+        }
+      })
+
+      return {
+        ...state,
+        tasks: updatedTasks,
+      }
+    }
+
     case 'START_NEW_POMODORO_SESSION': {
       const updatedTasks = state.tasks.map((task) => {
         if (task.id !== state.runningId) return task
@@ -330,6 +368,16 @@ export function useTaskTimer() {
     })
   }, [])
 
+  const updateLastBreakDuration = useCallback((taskId, duration) => {
+    dispatch({
+      type: 'UPDATE_LAST_BREAK_DURATION',
+      payload: {
+        taskId,
+        duration,
+      },
+    })
+  }, [])
+
   const isTaskRunning = Boolean(state.runningId)
   const isCallRunning = Boolean(state.runningCallId)
 
@@ -353,5 +401,6 @@ export function useTaskTimer() {
     setPomodoroFocusMinutes,
     addBreakToSession,
     startNewPomodoroSession,
+    updateLastBreakDuration,
   }
 }
