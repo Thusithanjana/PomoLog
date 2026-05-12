@@ -98,7 +98,7 @@ function App() {
   }, [isTaskRunning, runningTask])
 
   useEffect(() => {
-    const baseTitle = 'PromoLog'
+    const baseTitle = 'PomoLog'
 
     if (pomodoroTimer.isBreakTime && breakTaskId) {
       document.title = `${msToMMSS(pomodoroTimer.timeRemaining)} Break | ${baseTitle}`
