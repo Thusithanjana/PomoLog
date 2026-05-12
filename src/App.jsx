@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { AppHeader } from './components/AppHeader'
 import { BreakModal } from './components/BreakModal'
+import { BreakFinishedModal } from './components/BreakFinishedModal'
 import { ConcurrentTaskWarning } from './components/ConcurrentTaskWarning'
 import { ControlsPanel } from './components/ControlsPanel'
 import { EditTaskDialog } from './components/EditTaskDialog'
@@ -30,6 +31,7 @@ function App() {
     setDescription,
     startTask,
     stopTask,
+    resumeTask,
     startCall,
     stopCall,
     updateTaskDescription,
@@ -42,6 +44,7 @@ function App() {
 
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [showBreakModal, setShowBreakModal] = useState(false)
+  const [showBreakFinishedModal, setShowBreakFinishedModal] = useState(false)
   const [showConcurrentWarning, setShowConcurrentWarning] = useState(false)
   const [breakTaskId, setBreakTaskId] = useState(null)
 
@@ -62,15 +65,27 @@ function App() {
     [tasks, breakTaskId],
   )
 
+  const activeFocusMinutes =
+    runningTask?.pomodoroFocusMinutes ??
+    breakTask?.pomodoroFocusMinutes ??
+    pomodoroFocusMinutes
+
   const pomodoroTimer = usePomodoroTimer(
     isTaskRunning && runningTask?.usePomodo,
-    useCallback(() => {
+    useCallback((wasBreakTime) => {
+      if (wasBreakTime && breakTaskId) {
+        notifyTimerComplete(breakTask?.description)
+        setShowBreakFinishedModal(true)
+        setStatus('Break finished. Resume your task.')
+        return
+      }
+
       if (isTaskRunning && runningTask?.usePomodo) {
         notifyTimerComplete(runningTask?.description)
         setShowBreakModal(true)
       }
-    }, [isTaskRunning, runningTask]),
-    runningTask?.pomodoroFocusMinutes ?? pomodoroFocusMinutes,
+    }, [isTaskRunning, runningTask, breakTaskId, breakTask, setStatus]),
+    activeFocusMinutes,
   )
 
   useEffect(() => {
@@ -102,8 +117,27 @@ function App() {
       return
     }
 
+    if (breakTaskId && pomodoroTimer.isBreakTime && pomodoroTimer.timeRemaining <= 0) {
+      resumeTask(breakTaskId)
+      setBreakTaskId(null)
+      pomodoroTimer.resetTimer()
+      setShowBreakFinishedModal(false)
+      setStatus('Task resumed after break.')
+      return
+    }
+
     startTask()
-  }, [isTaskRunning, startTask, stopTask])
+  }, [
+    isTaskRunning,
+    breakTaskId,
+    pomodoroTimer.isBreakTime,
+    pomodoroTimer.timeRemaining,
+    resumeTask,
+    pomodoroTimer,
+    setStatus,
+    startTask,
+    stopTask,
+  ])
 
   const handleFocusMinutesChange = useCallback(
     (value) => {
@@ -188,6 +222,21 @@ function App() {
     setStatus('Task resumed without break.')
   }
 
+  const handleBreakResumeNow = () => {
+    if (!breakTaskId) return
+
+    resumeTask(breakTaskId)
+    setShowBreakFinishedModal(false)
+    setBreakTaskId(null)
+    pomodoroTimer.resetTimer()
+    setStatus('Task resumed after break.')
+  }
+
+  const handleBreakResumeLater = () => {
+    setShowBreakFinishedModal(false)
+    setStatus('Break finished. Resume task when ready.')
+  }
+
   const handleConcurrentPause = () => {
     stopTask()
     setShowConcurrentWarning(false)
@@ -268,6 +317,13 @@ function App() {
           onSkip={handleBreakSkip}
           onContinue={handleBreakContinue}
           focusMinutes={runningTask?.pomodoroFocusMinutes ?? pomodoroFocusMinutes}
+        />
+      )}
+
+      {showBreakFinishedModal && (
+        <BreakFinishedModal
+          onResumeNow={handleBreakResumeNow}
+          onResumeLater={handleBreakResumeLater}
         />
       )}
 

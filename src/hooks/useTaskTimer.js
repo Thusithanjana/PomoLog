@@ -63,6 +63,36 @@ function reducer(state, action) {
       }
     }
 
+    case 'RESUME_TASK': {
+      const updatedTasks = state.tasks.map((task) => {
+        if (task.id !== action.payload.taskId) return task
+
+        if (!task.usePomodo) {
+          return { ...task, endISO: null }
+        }
+
+        return {
+          ...task,
+          endISO: null,
+          pomodoroSessions: [
+            ...(task.pomodoroSessions || []),
+            {
+              startISO: action.payload.startISO,
+              endISO: null,
+              breaks: [],
+            },
+          ],
+        }
+      })
+
+      return {
+        ...state,
+        tasks: updatedTasks,
+        runningId: action.payload.taskId,
+        status: 'Task resumed.',
+      }
+    }
+
     case 'START_CALL': {
       const call = {
         id: action.payload.id,
@@ -239,6 +269,16 @@ export function useTaskTimer() {
     dispatch({ type: 'STOP_TASK', payload: { endISO: nowISO() } })
   }, [])
 
+  const resumeTask = useCallback((taskId) => {
+    dispatch({
+      type: 'RESUME_TASK',
+      payload: {
+        taskId,
+        startISO: nowISO(),
+      },
+    })
+  }, [])
+
   const startCall = useCallback(() => {
     dispatch({
       type: 'START_CALL',
@@ -304,6 +344,7 @@ export function useTaskTimer() {
     setDescription,
     startTask,
     stopTask,
+    resumeTask,
     startCall,
     stopCall,
     updateTaskDescription,
