@@ -43,6 +43,7 @@ function App() {
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [showBreakModal, setShowBreakModal] = useState(false)
   const [showConcurrentWarning, setShowConcurrentWarning] = useState(false)
+  const [breakTaskId, setBreakTaskId] = useState(null)
 
   const nowMs = useNowTicker(isAnyRunning)
 
@@ -54,6 +55,11 @@ function App() {
   const editingTask = useMemo(
     () => tasks.find((task) => task.id === editingTaskId) ?? null,
     [tasks, editingTaskId],
+  )
+
+  const breakTask = useMemo(
+    () => tasks.find((task) => task.id === breakTaskId) ?? null,
+    [tasks, breakTaskId],
   )
 
   const pomodoroTimer = usePomodoroTimer(
@@ -70,6 +76,11 @@ function App() {
   useEffect(() => {
     const baseTitle = 'PromoLog'
 
+    if (pomodoroTimer.isBreakTime && breakTaskId) {
+      document.title = `${msToMMSS(pomodoroTimer.timeRemaining)} Break | ${baseTitle}`
+      return
+    }
+
     if (isTaskRunning && runningTask?.usePomodo) {
       const phase = pomodoroTimer.isBreakTime ? 'Break' : 'Focus'
       document.title = `${msToMMSS(pomodoroTimer.timeRemaining)} ${phase} | ${baseTitle}`
@@ -80,6 +91,7 @@ function App() {
   }, [
     isTaskRunning,
     runningTask,
+    breakTaskId,
     pomodoroTimer.isBreakTime,
     pomodoroTimer.timeRemaining,
   ])
@@ -135,6 +147,7 @@ function App() {
   const handleBreakShort = () => {
     if (!runningTask) return
 
+    setBreakTaskId(runningTask.id)
     addBreakToSession('short', 5 * 60 * 1000)
     stopTask()
     setShowBreakModal(false)
@@ -147,6 +160,7 @@ function App() {
   const handleBreakLong = () => {
     if (!runningTask) return
 
+    setBreakTaskId(runningTask.id)
     addBreakToSession('long', 45 * 60 * 1000)
     stopTask()
     setShowBreakModal(false)
@@ -158,6 +172,7 @@ function App() {
   const handleBreakSkip = () => {
     if (!runningTask) return
 
+    setBreakTaskId(null)
     stopTask()
     setShowBreakModal(false)
     pomodoroTimer.skipBreak()
@@ -167,6 +182,7 @@ function App() {
   }
 
   const handleBreakContinue = () => {
+    setBreakTaskId(null)
     setShowBreakModal(false)
     pomodoroTimer.resetTimer()
     setStatus('Task resumed without break.')
@@ -214,6 +230,13 @@ function App() {
           />
         )}
 
+        {!isTaskRunning && pomodoroTimer.isBreakTime && breakTask && (
+          <PomodoroTimerDisplay
+            timeRemaining={pomodoroTimer.timeRemaining}
+            isBreakTime={pomodoroTimer.isBreakTime}
+          />
+        )}
+
         <TaskTable
           rows={rows}
           totalCount={tasks.length}
@@ -221,7 +244,9 @@ function App() {
           runningCallId={runningCallId}
           nowMs={nowMs}
           onEdit={handleEditOpen}
-          tasks={tasks}
+          breakTaskId={breakTaskId}
+          isBreakTime={pomodoroTimer.isBreakTime}
+          breakTimeRemaining={pomodoroTimer.timeRemaining}
         />
 
         <div className="footer-actions">

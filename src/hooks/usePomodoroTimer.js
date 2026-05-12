@@ -15,10 +15,12 @@ export function usePomodoroTimer(isTaskRunning, onBreakRequired, focusMinutes = 
 
   // Main timer countdown
   useEffect(() => {
-    if (!isTaskRunning) return undefined
+    if (!isTaskRunning && !isBreakTime) return undefined
 
     const intervalId = setInterval(() => {
       setTimeRemaining((prev) => {
+        if (prev <= 0) return 0
+
         const next = prev - 1000
 
         if (next <= 0) {

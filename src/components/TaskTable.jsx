@@ -1,5 +1,6 @@
 import { durationBetween, fmtTime } from '../utils/time'
 import { formatPomodoroStats } from '../utils/pomodoro'
+import { msToMMSS } from '../utils/pomodoro'
 
 export function TaskTable({
   rows,
@@ -8,7 +9,9 @@ export function TaskTable({
   runningCallId,
   nowMs,
   onEdit,
-  tasks,
+  breakTaskId,
+  isBreakTime,
+  breakTimeRemaining,
 }) {
   return (
     <div className="table-wrap">
@@ -29,6 +32,7 @@ export function TaskTable({
             const no = totalCount - index
             const isLive =
               !task.endISO && (task.id === runningId || task.id === runningCallId)
+            const isOnBreak = isBreakTime && task.id === breakTaskId
             const duration = durationBetween(
               task.startISO,
               isLive ? null : task.endISO,
@@ -42,12 +46,19 @@ export function TaskTable({
               : duration
 
             return (
-              <tr key={task.id}>
+              <tr key={task.id} className={isOnBreak ? 'break-row' : ''}>
                 <td>{no}</td>
-                <td>{task.description || ''}</td>
+                <td>
+                  {task.description || ''}
+                  {isOnBreak && <span className="break-pill">On break</span>}
+                </td>
                 <td>{fmtTime(task.startISO)}</td>
                 <td>{fmtTime(task.endISO)}</td>
-                <td className="nowrap">{displayDuration}</td>
+                <td className="nowrap">
+                  {isOnBreak
+                    ? `Break: ${msToMMSS(breakTimeRemaining)} left`
+                    : displayDuration}
+                </td>
                 <td>
                   <button
                     type="button"
