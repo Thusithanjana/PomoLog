@@ -249,38 +249,29 @@ function reducer(state, action) {
   }
 }
 
-export function useTaskTimer() {
-  const [state, dispatch] = useReducer(reducer, initialState)
+function localToday() {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+}
 
-  useEffect(() => {
+function loadInitialState() {
+  try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return
-
-    try {
-      const {
-        date,
-        tasks = [],
-        runningId = null,
-        runningCallId = null,
-      } = JSON.parse(raw)
-
-      const today = new Date().toISOString().slice(0, 10)
-      if (date !== today) return
-
-      dispatch({
-        type: 'RESTORE',
-        payload: { tasks, runningId, runningCallId },
-      })
-    } catch {
-      dispatch({
-        type: 'SET_STATUS',
-        payload: 'Could not restore previous session data.',
-      })
+    if (raw) {
+      const { date, tasks = [], runningId = null, runningCallId = null } = JSON.parse(raw)
+      if (date === localToday()) {
+        return { ...initialState, tasks, runningId, runningCallId }
+      }
     }
-  }, [])
+  } catch {}
+  return initialState
+}
+
+export function useTaskTimer() {
+  const [state, dispatch] = useReducer(reducer, undefined, loadInitialState)
 
   useEffect(() => {
-    const today = new Date().toISOString().slice(0, 10)
+    const today = localToday()
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
