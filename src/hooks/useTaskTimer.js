@@ -253,15 +253,19 @@ export function useTaskTimer() {
   const [state, dispatch] = useReducer(reducer, initialState)
 
   useEffect(() => {
-    const raw = sessionStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return
 
     try {
       const {
+        date,
         tasks = [],
         runningId = null,
         runningCallId = null,
       } = JSON.parse(raw)
+
+      const today = new Date().toISOString().slice(0, 10)
+      if (date !== today) return
 
       dispatch({
         type: 'RESTORE',
@@ -276,9 +280,11 @@ export function useTaskTimer() {
   }, [])
 
   useEffect(() => {
-    sessionStorage.setItem(
+    const today = new Date().toISOString().slice(0, 10)
+    localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
+        date: today,
         tasks: state.tasks,
         runningId: state.runningId,
         runningCallId: state.runningCallId,
