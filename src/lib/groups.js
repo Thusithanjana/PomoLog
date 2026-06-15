@@ -64,6 +64,7 @@ export async function fetchGroupEntries(groupId, sinceISO) {
     .eq('group_id', groupId)
     .gte('started_at', sinceISO)
     .order('started_at', { ascending: false })
+    .limit(500)
   if (error) { console.error(error); return [] }
   return data ?? []
 }

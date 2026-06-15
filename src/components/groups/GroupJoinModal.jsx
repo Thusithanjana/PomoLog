@@ -14,6 +14,10 @@ export function GroupJoinModal({ onClose, onJoin }) {
     e.preventDefault()
     const trimmed = code.trim()
     if (!trimmed) return
+    if (!/^[0-9a-f]{12}$/i.test(trimmed)) {
+      setError('Invalid invite code — should be 12 characters.')
+      return
+    }
     setJoining(true)
     const err = await onJoin(trimmed, nickname.trim() || null)
     setJoining(false)
