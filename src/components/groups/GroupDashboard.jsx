@@ -17,12 +17,18 @@ function startOfWeekISO() {
   return monday.toISOString()
 }
 
+function resolveName(userId, nickname, profiles) {
+  return nickname || profiles[userId] || userId.slice(0, 8)
+}
+
 function aggregateEntries(entries, members, profiles) {
   const result = {}
+  const memberNicknames = {}
 
   for (const m of members) {
+    memberNicknames[m.user_id] = m.nickname || null
     result[m.user_id] = {
-      displayName: profiles[m.user_id] || m.user_id.slice(0, 8),
+      displayName: resolveName(m.user_id, m.nickname, profiles),
       totalSeconds: 0,
       byTask: {},
     }
@@ -31,7 +37,7 @@ function aggregateEntries(entries, members, profiles) {
   for (const e of entries) {
     if (!result[e.user_id]) {
       result[e.user_id] = {
-        displayName: profiles[e.user_id] || e.user_id.slice(0, 8),
+        displayName: resolveName(e.user_id, memberNicknames[e.user_id], profiles),
         totalSeconds: 0,
         byTask: {},
       }

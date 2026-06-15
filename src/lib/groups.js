@@ -6,7 +6,7 @@ export async function fetchMyGroups() {
     .from('groups')
     .select(`
       id, name, invite_code, owner_id, created_at,
-      group_members ( user_id, role, joined_at )
+      group_members ( user_id, role, joined_at, nickname )
     `)
     .order('created_at', { ascending: true })
   if (error) { console.error(error); return [] }
@@ -43,16 +43,17 @@ export async function leaveGroup(groupId, userId) {
     .eq('user_id', userId)
 }
 
-/** Called when a logged-in user stops a task that was tagged to a group. */
+/** Called when a logged-in user stops a task. groupId may be null for personal entries. */
 export async function writeTimeEntry(userId, { taskLabel, startedAt, durationSeconds, groupId }) {
-  if (!supabase || !groupId) return
-  await supabase.from('time_entries').insert({
+  if (!supabase) return
+  const { error } = await supabase.from('time_entries').insert({
     user_id: userId,
     task_label: taskLabel || '(untitled)',
     started_at: startedAt,
     duration_seconds: durationSeconds,
-    group_id: groupId,
+    group_id: groupId ?? null,
   })
+  if (error) console.error('[PomoLog] writeTimeEntry failed:', error.message, error)
 }
 
 export async function fetchGroupEntries(groupId, sinceISO) {
