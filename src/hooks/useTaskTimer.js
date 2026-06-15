@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useReducer } from 'react'
-import { STORAGE_KEY } from '../constants/storage'
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
+import { useAuth } from '../context/AuthContext'
+import { loadLocal, loadRemote, saveLocal, saveRemote } from '../lib/storage'
 import { nowISO, uid } from '../utils/time'
 
 const initialState = {
@@ -255,34 +256,89 @@ function localToday() {
 }
 
 function loadInitialState() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const { date, tasks = [], runningId = null, runningCallId = null } = JSON.parse(raw)
-      if (date === localToday()) {
-        return { ...initialState, tasks, runningId, runningCallId }
-      }
-    }
-  } catch {}
+  // Always start from localStorage for the synchronous initializer.
+  // When a logged-in session is restored, useEffect below overwrites this
+  // with the remote data via RESTORE.
+  const local = loadLocal()
+  if (local) return { ...initialState, ...local }
   return initialState
 }
 
 export function useTaskTimer() {
+  const { user } = useAuth()
   const [state, dispatch] = useReducer(reducer, undefined, loadInitialState)
 
-  useEffect(() => {
-    const today = localToday()
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        date: today,
-        tasks: state.tasks,
-        runningId: state.runningId,
-        runningCallId: state.runningCallId,
-      }),
-    )
-  }, [state.tasks, state.runningId, state.runningCallId])
+  // false while we're waiting for a remote load to complete; true otherwise.
+  // Starts false when already logged in (need to fetch before saving), true when anonymous.
+  const [remoteReady, setRemoteReady] = useState(!user)
 
+  // Track previous user so we can detect login / logout transitions.
+  const prevUserRef = useRef(undefined)
+
+  // ── Remote load on auth transitions ──────────────────────────────────────
+  useEffect(() => {
+    const prevUser = prevUserRef.current
+    prevUserRef.current = user
+
+    // Skip the very first render (prevUser is undefined, not null).
+    if (prevUser === undefined) {
+      // On first render: if already logged in, load from Supabase.
+      if (user) {
+        setRemoteReady(false)
+        loadRemote(user.id).then((remote) => {
+          dispatch({ type: 'RESTORE', payload: remote ?? { tasks: [], runningId: null, runningCallId: null } })
+          setRemoteReady(true)
+        })
+      }
+      return
+    }
+
+    if (user && !prevUser) {
+      // Just logged in — block saves until App.jsx calls reload() after handling
+      // the migration offer (or calling reload() directly when no local data).
+      setRemoteReady(false)
+      return
+    }
+
+    if (!user && prevUser) {
+      // Just logged out — fall back to whatever is in localStorage (likely empty).
+      const local = loadLocal()
+      dispatch({ type: 'RESTORE', payload: local ?? { tasks: [], runningId: null, runningCallId: null } })
+      setRemoteReady(true)
+    }
+  }, [user])
+
+  // ── Persistence save ──────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!remoteReady) return // don't overwrite remote data before initial load completes
+
+    const payload = {
+      tasks: state.tasks,
+      runningId: state.runningId,
+      runningCallId: state.runningCallId,
+    }
+
+    if (user) {
+      saveRemote(user.id, payload)
+    } else {
+      saveLocal(payload)
+    }
+  }, [user, remoteReady, state.tasks, state.runningId, state.runningCallId])
+
+  // ── reload — called by App.jsx after migration decision ───────────────────
+  const reload = useCallback(async () => {
+    setRemoteReady(false)
+    if (user) {
+      const remote = await loadRemote(user.id)
+      dispatch({ type: 'RESTORE', payload: remote ?? { tasks: [], runningId: null, runningCallId: null } })
+    } else {
+      const local = loadLocal()
+      dispatch({ type: 'RESTORE', payload: local ?? { tasks: [], runningId: null, runningCallId: null } })
+    }
+    setRemoteReady(true)
+  }, [user])
+
+  // ── Action dispatchers ────────────────────────────────────────────────────
   const setDescription = useCallback((value) => {
     dispatch({ type: 'SET_DESCRIPTION', payload: value })
   }, [])
@@ -386,6 +442,7 @@ export function useTaskTimer() {
     isTaskRunning,
     isCallRunning,
     isAnyRunning: isTaskRunning || isCallRunning,
+    reload,
     setDescription,
     startTask,
     stopTask,

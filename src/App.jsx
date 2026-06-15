@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './App.css'
 import { AppHeader } from './components/AppHeader'
 import { BreakModal } from './components/BreakModal'
@@ -8,14 +8,19 @@ import { ControlsPanel } from './components/ControlsPanel'
 import { EditTaskDialog } from './components/EditTaskDialog'
 import { PomodoroTimerDisplay } from './components/PomodoroTimerDisplay'
 import { TaskTable } from './components/TaskTable'
+import { MigrationModal } from './components/auth/MigrationModal'
+import { useAuth } from './context/AuthContext'
 import { useNowTicker } from './hooks/useNowTicker'
 import { usePomodoroTimer } from './hooks/usePomodoroTimer'
 import { useTaskTimer } from './hooks/useTaskTimer'
+import { clearLocal, hasLocalDataToday, migrateLocalToRemote } from './lib/storage'
 import { downloadCsv } from './utils/csv'
 import { notifyTimerComplete } from './utils/notification'
 import { msToMMSS } from './utils/pomodoro'
 
 function App() {
+  const { user } = useAuth()
+
   const {
     tasks,
     rows,
@@ -28,6 +33,7 @@ function App() {
     isTaskRunning,
     isCallRunning,
     isAnyRunning,
+    reload,
     setDescription,
     startTask,
     stopTask,
@@ -42,6 +48,40 @@ function App() {
     startNewPomodoroSession,
     updateLastBreakDuration,
   } = useTaskTimer()
+
+  // ── Migration: offer to move local data on first login ───────────────────
+  const [showMigrationModal, setShowMigrationModal] = useState(false)
+  const [migrating, setMigrating] = useState(false)
+  const prevUserRef = useRef(undefined)
+
+  useEffect(() => {
+    const prevUser = prevUserRef.current
+    prevUserRef.current = user
+
+    // Only trigger when the user transitions from not-logged-in to logged-in.
+    if (user && !prevUser) {
+      if (hasLocalDataToday()) {
+        setShowMigrationModal(true)
+      } else {
+        reload()
+      }
+    }
+  }, [user, reload])
+
+  const handleMigrate = async () => {
+    setMigrating(true)
+    await migrateLocalToRemote(user.id)
+    await reload()
+    setMigrating(false)
+    setShowMigrationModal(false)
+  }
+
+  const handleDiscardLocal = async () => {
+    clearLocal()
+    await reload()
+    setShowMigrationModal(false)
+  }
+  // ─────────────────────────────────────────────────────────────────────────
 
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [showBreakModal, setShowBreakModal] = useState(false)
@@ -382,6 +422,14 @@ function App() {
           onPauseAndStart={handleConcurrentPause}
           onStopAndStart={handleConcurrentStop}
           onCancel={handleConcurrentCancel}
+        />
+      )}
+
+      {showMigrationModal && (
+        <MigrationModal
+          onMigrate={handleMigrate}
+          onDiscard={handleDiscardLocal}
+          migrating={migrating}
         />
       )}
     </div>
