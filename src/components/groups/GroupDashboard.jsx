@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { useGroups } from '../../hooks/useGroups'
 import { fetchGroupEntries, fetchProfiles } from '../../lib/groups'
+import { supabase } from '../../lib/supabase'
 import { GroupCreateModal } from './GroupCreateModal'
 import { GroupJoinModal } from './GroupJoinModal'
 import { GroupMemberBreakdown } from './GroupMemberBreakdown'
@@ -83,6 +84,34 @@ export function GroupDashboard() {
       setEntries(data)
       setEntriesLoading(false)
     })
+  }, [selectedGroupId])
+
+  // Realtime: stream inserts/updates for the active group
+  useEffect(() => {
+    if (!selectedGroupId || !supabase) return
+    const channel = supabase
+      .channel(`group-entries:${selectedGroupId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'time_entries', filter: `group_id=eq.${selectedGroupId}` },
+        (payload) => {
+          // Only include entries that fall within the current week window
+          if (payload.new.started_at >= startOfWeekISO()) {
+            setEntries((prev) =>
+              prev.some((e) => e.id === payload.new.id) ? prev : [payload.new, ...prev]
+            )
+          }
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'time_entries', filter: `group_id=eq.${selectedGroupId}` },
+        (payload) => {
+          setEntries((prev) => prev.map((e) => (e.id === payload.new.id ? payload.new : e)))
+        }
+      )
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
   }, [selectedGroupId])
 
   if (!user) return null
