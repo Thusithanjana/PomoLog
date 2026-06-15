@@ -1,3 +1,6 @@
+import { useAuth } from '../context/AuthContext'
+import { useGroups } from '../hooks/useGroups'
+
 export function ControlsPanel({
   description,
   onDescriptionChange,
@@ -14,7 +17,12 @@ export function ControlsPanel({
   onTogglePomodo,
   pomodoroFocusMinutes,
   onPomodoroFocusMinutesChange,
+  selectedGroupId,
+  onGroupChange,
 }) {
+  const { user } = useAuth()
+  const { groups } = useGroups()
+
   return (
     <div className="controls">
       <div>
@@ -27,6 +35,29 @@ export function ControlsPanel({
           disabled={isTaskRunning}
         />
       </div>
+
+      {user && groups.length > 0 && (
+        <div>
+          <label htmlFor="group-select">Log to group</label>
+          <select
+            id="group-select"
+            value={selectedGroupId ?? ''}
+            onChange={(e) => onGroupChange(e.target.value || null)}
+            disabled={isTaskRunning}
+            style={{
+              width: '100%', padding: '8px 10px',
+              border: '1px solid var(--border)', borderRadius: '8px',
+              background: 'var(--card)', color: 'var(--charcoal)',
+              fontSize: '0.95rem', cursor: isTaskRunning ? 'not-allowed' : 'pointer',
+            }}
+          >
+            <option value="">Personal (not shared)</option>
+            {groups.map((g) => (
+              <option key={g.id} value={g.id}>{g.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="pomodo-toggle">
         <label htmlFor="pomodo-checkbox">

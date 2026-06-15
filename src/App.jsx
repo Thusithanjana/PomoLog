@@ -9,11 +9,13 @@ import { EditTaskDialog } from './components/EditTaskDialog'
 import { PomodoroTimerDisplay } from './components/PomodoroTimerDisplay'
 import { TaskTable } from './components/TaskTable'
 import { MigrationModal } from './components/auth/MigrationModal'
+import { GroupDashboard } from './components/groups/GroupDashboard'
 import { useAuth } from './context/AuthContext'
 import { useNowTicker } from './hooks/useNowTicker'
 import { usePomodoroTimer } from './hooks/usePomodoroTimer'
 import { useTaskTimer } from './hooks/useTaskTimer'
 import { clearLocal, hasLocalDataToday, migrateLocalToRemote } from './lib/storage'
+import { writeTimeEntry } from './lib/groups'
 import { downloadCsv } from './utils/csv'
 import { notifyTimerComplete } from './utils/notification'
 import { msToMMSS } from './utils/pomodoro'
@@ -83,6 +85,18 @@ function App() {
   }
   // ─────────────────────────────────────────────────────────────────────────
 
+  // ── View + group selection (Pro / logged-in only) ─────────────────────────
+  const [view, setView] = useState('timer')
+  const [selectedGroupId, setSelectedGroupId] = useState(null)
+
+  // Reset group-related state when user logs out.
+  useEffect(() => {
+    if (!user) {
+      setView('timer')
+      setSelectedGroupId(null)
+    }
+  }, [user])
+
   const [editingTaskId, setEditingTaskId] = useState(null)
   const [showBreakModal, setShowBreakModal] = useState(false)
   const [breakModalMode, setBreakModalMode] = useState('auto')
@@ -96,6 +110,32 @@ function App() {
     () => tasks.find((task) => task.id === runningId),
     [tasks, runningId],
   )
+
+  // When a task stops and a group was selected, write a time_entry to Supabase.
+  // Anonymous users never have selectedGroupId set, so this block never runs for them.
+  const prevRunningRef = useRef({ id: null, task: null, groupId: null })
+  useEffect(() => {
+    const prev = prevRunningRef.current
+    prevRunningRef.current = {
+      id: runningId,
+      task: runningTask ? { ...runningTask } : null,
+      groupId: selectedGroupId,
+    }
+
+    if (prev.id && !runningId && user && prev.groupId && prev.task) {
+      const wallMs = Date.now() - new Date(prev.task.startISO).getTime()
+      const netMs = wallMs - (prev.task.totalBreakTime || 0)
+      const durationSeconds = Math.round(netMs / 1000)
+      if (durationSeconds > 0 && durationSeconds < 86400) {
+        writeTimeEntry(user.id, {
+          taskLabel: prev.task.description,
+          startedAt: prev.task.startISO,
+          durationSeconds,
+          groupId: prev.groupId,
+        })
+      }
+    }
+  }, [runningId, runningTask, user, selectedGroupId])
 
   const editingTask = useMemo(
     () => tasks.find((task) => task.id === editingTaskId) ?? null,
@@ -339,9 +379,9 @@ function App() {
 
   return (
     <div className="app">
-      <AppHeader />
+      <AppHeader view={view} onViewChange={setView} />
 
-      <section className="panel">
+      {view === 'groups' ? <GroupDashboard /> : <section className="panel">
         <ControlsPanel
           description={description}
           onDescriptionChange={setDescription}
@@ -358,6 +398,8 @@ function App() {
           onTogglePomodo={setUsePomodo}
           pomodoroFocusMinutes={pomodoroFocusMinutes}
           onPomodoroFocusMinutesChange={handleFocusMinutesChange}
+          selectedGroupId={selectedGroupId}
+          onGroupChange={setSelectedGroupId}
         />
 
         {isTaskRunning && runningTask?.usePomodo && (
@@ -390,7 +432,7 @@ function App() {
           <div className="hint">{status}</div>
           <div className="hint">Tip: Click "Edit" to change any description.</div>
         </div>
-      </section>
+      </section>}
 
       <EditTaskDialog
         task={editingTask}

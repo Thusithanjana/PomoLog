@@ -48,7 +48,11 @@ export async function loadRemote(userId) {
     .eq('user_id', userId)
     .eq('date', localToday())
     .maybeSingle()
-  if (error || !data) return null
+  if (error) {
+    console.error('[PomoLog] loadRemote failed:', error.message, error)
+    return null
+  }
+  if (!data) return null
   return {
     tasks: data.tasks ?? [],
     runningId: data.running_id ?? null,
@@ -58,7 +62,7 @@ export async function loadRemote(userId) {
 
 export async function saveRemote(userId, { tasks, runningId, runningCallId }) {
   if (!supabase) return
-  await supabase.from('task_logs').upsert(
+  const { error } = await supabase.from('task_logs').upsert(
     {
       user_id: userId,
       date: localToday(),
@@ -69,6 +73,7 @@ export async function saveRemote(userId, { tasks, runningId, runningCallId }) {
     },
     { onConflict: 'user_id,date' },
   )
+  if (error) console.error('[PomoLog] saveRemote failed:', error.message, error)
 }
 
 // ── Migration ──────────────────────────────────────────────────────────────
