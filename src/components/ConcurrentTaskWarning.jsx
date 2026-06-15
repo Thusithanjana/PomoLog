@@ -12,7 +12,7 @@ export function ConcurrentTaskWarning({
         aria-modal="true"
         aria-labelledby="concurrent-title"
       >
-        <h2 id="concurrent-title">⚠️ Task Already Running</h2>
+        <h2 id="concurrent-title">Task Already Running</h2>
         <p className="break-message">
           You have an active task: <strong>{runningTaskDescription || 'Unnamed'}</strong>
         </p>
@@ -22,10 +22,10 @@ export function ConcurrentTaskWarning({
 
         <div className="break-options">
           <button type="button" onClick={onPauseAndStart}>
-            ⏸️ Pause Current & Start New
+            Pause Current &amp; Start New
           </button>
           <button type="button" className="danger" onClick={onStopAndStart}>
-            ⏹️ Stop Current & Start New
+            Stop Current &amp; Start New
           </button>
           <button type="button" className="ghost" onClick={onCancel}>
             Cancel

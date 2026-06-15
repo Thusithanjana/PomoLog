@@ -16,7 +16,7 @@ export function BreakModal({
         aria-modal="true"
         aria-labelledby="break-title"
       >
-        <h2 id="break-title">{isManual ? 'Take a Break' : '🍅 Pomodoro Complete!'}</h2>
+        <h2 id="break-title">{isManual ? 'Take a Break' : 'Pomodoro Complete'}</h2>
         <p className="break-message">
           {isManual
             ? 'Pause this task and choose a break length.'
@@ -25,13 +25,13 @@ export function BreakModal({
 
         <div className="break-options">
           <button type="button" onClick={onShortBreak}>
-            ☕ Short Break (5 min)
+            Short Break (5 min)
           </button>
           <button type="button" onClick={onLongBreak}>
-            🌳 Long Break (45 min)
+            Long Break (45 min)
           </button>
           <button type="button" className="ghost" onClick={onSkip}>
-            {isManual ? 'Cancel' : '⏭️ Skip Break'}
+            {isManual ? 'Cancel' : 'Skip Break'}
           </button>
         </div>
 

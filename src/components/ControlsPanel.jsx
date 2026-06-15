@@ -37,7 +37,7 @@ export function ControlsPanel({
             onChange={(event) => onTogglePomodo(event.target.checked)}
             disabled={isTaskRunning}
           />
-          <span>🍅 Pomodoro Timer ({pomodoroFocusMinutes} min focus)</span>
+          <span>Pomodoro Timer ({pomodoroFocusMinutes} min focus)</span>
         </label>
       </div>
 
