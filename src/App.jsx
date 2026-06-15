@@ -10,6 +10,7 @@ import { PomodoroTimerDisplay } from './components/PomodoroTimerDisplay'
 import { TaskTable } from './components/TaskTable'
 import { MigrationModal } from './components/auth/MigrationModal'
 import { GroupDashboard } from './components/groups/GroupDashboard'
+import { ReportsDashboard } from './components/reports/ReportsDashboard'
 import { useAuth } from './context/AuthContext'
 import { useNowTicker } from './hooks/useNowTicker'
 import { usePomodoroTimer } from './hooks/usePomodoroTimer'
@@ -122,7 +123,7 @@ function App() {
       groupId: selectedGroupId,
     }
 
-    if (prev.id && !runningId && user && prev.groupId && prev.task) {
+    if (prev.id && !runningId && user && prev.task) {
       const wallMs = Date.now() - new Date(prev.task.startISO).getTime()
       const netMs = wallMs - (prev.task.totalBreakTime || 0)
       const durationSeconds = Math.round(netMs / 1000)
@@ -381,7 +382,7 @@ function App() {
     <div className="app">
       <AppHeader view={view} onViewChange={setView} />
 
-      {view === 'groups' ? <GroupDashboard /> : <section className="panel">
+      {view === 'reports' ? <ReportsDashboard /> : view === 'groups' ? <GroupDashboard /> : <section className="panel">
         <ControlsPanel
           description={description}
           onDescriptionChange={setDescription}

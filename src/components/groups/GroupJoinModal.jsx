@@ -1,7 +1,12 @@
 import { useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
 
 export function GroupJoinModal({ onClose, onJoin }) {
+  const { user } = useAuth()
+  const defaultNickname = user?.email?.split('@')[0] ?? ''
+
   const [code, setCode] = useState('')
+  const [nickname, setNickname] = useState(defaultNickname)
   const [error, setError] = useState('')
   const [joining, setJoining] = useState(false)
 
@@ -10,7 +15,7 @@ export function GroupJoinModal({ onClose, onJoin }) {
     const trimmed = code.trim()
     if (!trimmed) return
     setJoining(true)
-    const err = await onJoin(trimmed)
+    const err = await onJoin(trimmed, nickname.trim() || null)
     setJoining(false)
     if (err) { setError(err); return }
     onClose()
@@ -32,6 +37,20 @@ export function GroupJoinModal({ onClose, onJoin }) {
               onChange={(e) => { setCode(e.target.value); setError('') }}
               autoFocus
               style={{ width: '100%', boxSizing: 'border-box', fontFamily: 'monospace', letterSpacing: '0.05em' }}
+            />
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <label htmlFor="join-nickname" style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', color: 'var(--ink-soft)' }}>
+              Your nickname in this group
+            </label>
+            <input
+              id="join-nickname"
+              type="text"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              maxLength={50}
+              placeholder="How teammates will see your name"
+              style={{ width: '100%', boxSizing: 'border-box' }}
             />
           </div>
           {error && (

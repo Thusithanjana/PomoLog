@@ -26,6 +26,13 @@ export function AppHeader({ view, onViewChange }) {
             >
               Groups
             </button>
+            <button
+              className={view === 'reports' ? '' : 'ghost'}
+              style={{ padding: '4px 12px', fontSize: '0.875rem' }}
+              onClick={() => onViewChange('reports')}
+            >
+              Reports
+            </button>
           </nav>
         )}
       </div>

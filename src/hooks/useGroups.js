@@ -17,15 +17,15 @@ export function useGroups() {
 
   useEffect(() => { refresh() }, [refresh])
 
-  const handleCreate = useCallback(async (name) => {
-    const { data, error } = await createGroup(name)
+  const handleCreate = useCallback(async (name, nickname) => {
+    const { data, error } = await createGroup(name, nickname)
     if (error) return { error: error.message, data: null }
     await refresh()
     return { error: null, data }
   }, [refresh])
 
-  const handleJoin = useCallback(async (inviteCode) => {
-    const { data, error } = await joinGroup(inviteCode)
+  const handleJoin = useCallback(async (inviteCode, nickname) => {
+    const { data, error } = await joinGroup(inviteCode, nickname)
     if (error) return error.message
     await refresh()
     return null

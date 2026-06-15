@@ -1,7 +1,12 @@
 import { useState } from 'react'
+import { useAuth } from '../../context/AuthContext'
 
 export function GroupCreateModal({ onClose, onCreate }) {
+  const { user } = useAuth()
+  const defaultNickname = user?.email?.split('@')[0] ?? ''
+
   const [name, setName] = useState('')
+  const [nickname, setNickname] = useState(defaultNickname)
   const [inviteCode, setInviteCode] = useState(null)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -12,7 +17,7 @@ export function GroupCreateModal({ onClose, onCreate }) {
     const trimmed = name.trim()
     if (!trimmed) return
     setSaving(true)
-    const { error: err, data } = await onCreate(trimmed)
+    const { error: err, data } = await onCreate(trimmed, nickname.trim() || null)
     setSaving(false)
     if (err) { setError(err); return }
     setInviteCode(data.invite_code)
@@ -67,6 +72,20 @@ export function GroupCreateModal({ onClose, onCreate }) {
               onChange={(e) => { setName(e.target.value); setError('') }}
               maxLength={80}
               autoFocus
+              style={{ width: '100%', boxSizing: 'border-box' }}
+            />
+          </div>
+          <div style={{ marginBottom: '16px' }}>
+            <label htmlFor="group-nickname" style={{ display: 'block', marginBottom: '6px', fontSize: '0.9rem', color: 'var(--ink-soft)' }}>
+              Your nickname in this group
+            </label>
+            <input
+              id="group-nickname"
+              type="text"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              maxLength={50}
+              placeholder="How teammates will see your name"
               style={{ width: '100%', boxSizing: 'border-box' }}
             />
           </div>

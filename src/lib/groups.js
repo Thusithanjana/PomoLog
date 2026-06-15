@@ -24,14 +24,14 @@ export async function fetchProfiles(userIds) {
   return Object.fromEntries((data ?? []).map((p) => [p.user_id, p.display_name]))
 }
 
-export async function createGroup(name) {
+export async function createGroup(name, nickname) {
   if (!supabase) return { data: null, error: new Error('Auth not configured') }
-  return supabase.rpc('create_group', { p_name: name })
+  return supabase.rpc('create_group', { p_name: name, p_nickname: nickname || null })
 }
 
-export async function joinGroup(inviteCode) {
+export async function joinGroup(inviteCode, nickname) {
   if (!supabase) return { data: null, error: new Error('Auth not configured') }
-  return supabase.rpc('join_group_by_invite_code', { p_invite_code: inviteCode.trim() })
+  return supabase.rpc('join_group_by_invite_code', { p_invite_code: inviteCode.trim(), p_nickname: nickname || null })
 }
 
 export async function leaveGroup(groupId, userId) {
