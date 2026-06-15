@@ -5,14 +5,21 @@ function fmtHours(seconds) {
   return (Number(seconds) / 3600).toFixed(1) + 'h'
 }
 
+const LABEL = {
+  fontSize: '11px', fontWeight: 700, letterSpacing: '0.6px',
+  textTransform: 'uppercase', color: 'var(--ink-soft)',
+}
+
 function CssBar({ value, max, color = 'var(--brand)' }) {
   const pct = max > 0 ? Math.round((Number(value) / max) * 100) : 0
   return (
-    <div style={{ height: '4px', background: 'var(--border)', borderRadius: '2px', marginTop: '6px' }}>
+    <div style={{ height: '4px', background: 'var(--border)', borderRadius: '2px', marginTop: '5px' }}>
       <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '2px', transition: 'width 0.3s' }} />
     </div>
   )
 }
+
+const MEDAL = ['#F5A623', '#9B9B9B', '#CD7F32']
 
 export function GroupReport({ groupId }) {
   const [leaderboard, setLeaderboard] = useState([])
@@ -33,51 +40,51 @@ export function GroupReport({ groupId }) {
   }, [groupId])
 
   if (!groupId) return (
-    <p style={{ color: 'var(--ink-soft)', fontSize: '0.875rem' }}>Select a group to see its report.</p>
+    <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>Select a group to see its report.</p>
   )
 
-  if (loading) return <p style={{ color: 'var(--ink-soft)' }}>Loading group stats…</p>
+  if (loading) return <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>Loading group stats…</p>
 
   const maxLbSec = Math.max(...leaderboard.map((r) => Number(r.total_seconds)), 1)
   const maxTaskSec = Math.max(...tasks.map((r) => Number(r.total_seconds)), 1)
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+    <div style={{ display: 'grid', gap: '20px' }}>
 
       {/* Leaderboard */}
       <div>
-        <h3 style={{ margin: '0 0 14px', fontSize: '0.95rem', color: 'var(--charcoal)', fontWeight: 600 }}>
-          Leaderboard — this week
-        </h3>
+        <div style={{ ...LABEL, marginBottom: '10px' }}>Leaderboard — this week</div>
         {leaderboard.length === 0 ? (
-          <p style={{ color: 'var(--ink-soft)', fontSize: '0.875rem' }}>No entries logged this week.</p>
+          <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>No entries logged this week.</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'grid', gap: '6px' }}>
             {leaderboard.map((row, i) => (
               <div key={row.user_id} style={{
-                padding: '14px 16px', borderRadius: '10px',
-                border: '1px solid var(--border)', background: 'var(--card)',
+                padding: '10px 12px', borderRadius: '8px',
+                border: '1px solid var(--border)', background: 'var(--bg)',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{
-                    width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
-                    background: i === 0 ? '#F5A623' : i === 1 ? '#9B9B9B' : i === 2 ? '#CD7F32' : 'var(--border)',
+                    width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
+                    background: MEDAL[i] ?? 'var(--border)',
                     color: i < 3 ? '#fff' : 'var(--ink-soft)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: '0.75rem', fontWeight: 700,
+                    fontSize: '11px', fontWeight: 700,
                   }}>
                     {i + 1}
                   </span>
-                  <span style={{ fontWeight: 600, color: 'var(--charcoal)', fontSize: '0.95rem', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {row.nickname}
                   </span>
-                  <span style={{ fontWeight: 700, color: Number(row.total_seconds) > 0 ? 'var(--brand)' : 'var(--ink-soft)', flexShrink: 0, fontSize: '0.95rem' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: Number(row.total_seconds) > 0 ? 'var(--brand)' : 'var(--ink-soft)', flexShrink: 0 }}>
                     {fmtHours(row.total_seconds)}
                   </span>
                 </div>
-                <CssBar value={row.total_seconds} max={maxLbSec} color={i === 0 ? '#F5A623' : 'var(--brand)'} />
-                <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)', marginTop: '6px' }}>
-                  {row.entry_count} session{row.entry_count !== 1 ? 's' : ''}
+                <div style={{ paddingLeft: '28px' }}>
+                  <CssBar value={row.total_seconds} max={maxLbSec} color={MEDAL[i] ?? 'var(--brand)'} />
+                  <span style={{ fontSize: '11px', color: 'var(--ink-soft)', display: 'block', marginTop: '4px' }}>
+                    {row.entry_count} session{row.entry_count !== 1 ? 's' : ''}
+                  </span>
                 </div>
               </div>
             ))}
@@ -87,24 +94,22 @@ export function GroupReport({ groupId }) {
 
       {/* Task breakdown */}
       <div>
-        <h3 style={{ margin: '0 0 14px', fontSize: '0.95rem', color: 'var(--charcoal)', fontWeight: 600 }}>
-          Time per task — this week
-        </h3>
+        <div style={{ ...LABEL, marginBottom: '10px' }}>Time per task — this week</div>
         {tasks.length === 0 ? (
-          <p style={{ color: 'var(--ink-soft)', fontSize: '0.875rem' }}>No entries logged this week.</p>
+          <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>No entries logged this week.</p>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'grid', gap: '8px' }}>
             {tasks.map((row) => (
               <div key={row.task_label}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
-                  <span style={{ color: 'var(--charcoal)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '70%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', alignItems: 'baseline' }}>
+                  <span style={{ color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
                     {row.task_label}
                   </span>
-                  <div style={{ display: 'flex', gap: '12px', flexShrink: 0, marginLeft: '8px' }}>
-                    <span style={{ color: 'var(--ink-soft)', fontSize: '0.78rem' }}>
+                  <div style={{ display: 'flex', gap: '12px', flexShrink: 0, marginLeft: '8px', alignItems: 'baseline' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--ink-soft)', fontWeight: 500 }}>
                       {row.contributor_count} contributor{row.contributor_count !== 1 ? 's' : ''}
                     </span>
-                    <span style={{ fontWeight: 600, color: 'var(--brand)' }}>
+                    <span style={{ fontWeight: 600, color: 'var(--leaf)' }}>
                       {fmtHours(row.total_seconds)}
                     </span>
                   </div>
