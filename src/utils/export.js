@@ -1,7 +1,3 @@
-import * as XLSX from 'xlsx'
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
-
 // ── helpers ───────────────────────────────────────────────────────────────
 
 function fmtHours(seconds) {
@@ -14,10 +10,11 @@ function fmtDate(isoString) {
 
 // ── Excel export ──────────────────────────────────────────────────────────
 
-export function exportPersonalToExcel({ periodLabel, summary, dailyRows, topTaskRows }) {
+export async function exportPersonalToExcel({ periodLabel, summary, dailyRows, topTaskRows }) {
+  const XLSX = await import('xlsx')
+
   const wb = XLSX.utils.book_new()
 
-  // Summary sheet
   const summaryData = [
     { Metric: 'Period', Value: periodLabel },
     { Metric: 'Total hours', Value: fmtHours(summary.totalSeconds) },
@@ -27,16 +24,14 @@ export function exportPersonalToExcel({ periodLabel, summary, dailyRows, topTask
   ]
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), 'Summary')
 
-  // Daily breakdown sheet
   const dailyData = dailyRows.map((r) => ({
     Date: r.date,
-    'Hours': fmtHours(r.totalSeconds),
+    Hours: fmtHours(r.totalSeconds),
     Sessions: r.sessions,
     Tasks: r.tasks.join(', '),
   }))
   XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(dailyData.length ? dailyData : [{ Date: 'No data', Hours: '', Sessions: '', Tasks: '' }]), 'Daily Breakdown')
 
-  // Top tasks sheet
   const taskData = topTaskRows.map((r, i) => ({
     Rank: i + 1,
     Task: r.task_label,
@@ -48,7 +43,9 @@ export function exportPersonalToExcel({ periodLabel, summary, dailyRows, topTask
   XLSX.writeFile(wb, `pomolog-personal-${periodLabel.toLowerCase().replace(/\s+/g, '-')}.xlsx`)
 }
 
-export function exportGroupToExcel({ groupName, periodLabel, leaderboardRows, taskRows }) {
+export async function exportGroupToExcel({ groupName, periodLabel, leaderboardRows, taskRows }) {
+  const XLSX = await import('xlsx')
+
   const wb = XLSX.utils.book_new()
 
   const lbData = leaderboardRows.map((r, i) => ({
@@ -89,11 +86,13 @@ function pdfHeader(doc, title, periodLabel) {
   return 48
 }
 
-export function exportPersonalToPdf({ periodLabel, summary, dailyRows, topTaskRows }) {
+export async function exportPersonalToPdf({ periodLabel, summary, dailyRows, topTaskRows }) {
+  const { default: jsPDF } = await import('jspdf')
+  const { default: autoTable } = await import('jspdf-autotable')
+
   const doc = new jsPDF()
   let y = pdfHeader(doc, 'Personal Report', periodLabel)
 
-  // Summary stats
   doc.setFontSize(11)
   doc.setTextColor(...CHARCOAL)
   doc.text('Summary', 14, y)
@@ -113,7 +112,6 @@ export function exportPersonalToPdf({ periodLabel, summary, dailyRows, topTaskRo
   })
   y = doc.lastAutoTable.finalY + 10
 
-  // Daily breakdown
   doc.setFontSize(11)
   doc.setTextColor(...CHARCOAL)
   doc.text('Daily Breakdown', 14, y)
@@ -131,7 +129,6 @@ export function exportPersonalToPdf({ periodLabel, summary, dailyRows, topTaskRo
   })
   y = doc.lastAutoTable.finalY + 10
 
-  // Top tasks
   doc.setFontSize(11)
   doc.setTextColor(...CHARCOAL)
   doc.text('Top Tasks', 14, y)
@@ -150,7 +147,10 @@ export function exportPersonalToPdf({ periodLabel, summary, dailyRows, topTaskRo
   doc.save(`pomolog-personal-${periodLabel.toLowerCase().replace(/\s+/g, '-')}.pdf`)
 }
 
-export function exportGroupToPdf({ groupName, periodLabel, leaderboardRows, taskRows }) {
+export async function exportGroupToPdf({ groupName, periodLabel, leaderboardRows, taskRows }) {
+  const { default: jsPDF } = await import('jspdf')
+  const { default: autoTable } = await import('jspdf-autotable')
+
   const doc = new jsPDF()
   let y = pdfHeader(doc, `Group Report — ${groupName || ''}`, periodLabel)
 
