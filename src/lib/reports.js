@@ -41,3 +41,20 @@ export async function fetchGroupTaskBreakdown(groupId) {
   if (error) { console.error('[PomoLog] group_task_breakdown:', error.message); return [] }
   return data ?? []
 }
+
+/**
+ * Fetches the current user's personal time_entries since startISO.
+ * RLS ensures only the calling user's rows are returned — no user_id filter needed.
+ * Returns [{ task_label, started_at, duration_seconds }] sorted newest-first.
+ */
+export async function fetchPersonalEntries(startISO) {
+  if (!supabase) return []
+  const { data, error } = await supabase
+    .from('time_entries')
+    .select('task_label, started_at, duration_seconds')
+    .gte('started_at', startISO)
+    .order('started_at', { ascending: false })
+    .limit(2000)
+  if (error) { console.error('[PomoLog] fetchPersonalEntries:', error.message); return [] }
+  return data ?? []
+}

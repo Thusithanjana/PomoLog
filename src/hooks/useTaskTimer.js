@@ -272,6 +272,12 @@ export function useTaskTimer() {
   // Starts false when already logged in (need to fetch before saving), true when anonymous.
   const [remoteReady, setRemoteReady] = useState(!user)
 
+  // Ref mirrors remoteReady but updates synchronously within the same render commit.
+  // This prevents the save effect (defined after the auth effect) from calling saveRemote
+  // with empty state in the same render cycle where the auth effect sets remoteReady=false.
+  // useState updates are batched and only visible in the next render; useRef is immediate.
+  const remoteReadyRef = useRef(!user)
+
   // Track previous user so we can detect login / logout transitions.
   const prevUserRef = useRef(undefined)
 
@@ -284,9 +290,11 @@ export function useTaskTimer() {
     if (prevUser === undefined) {
       // On first render: if already logged in, load from Supabase.
       if (user) {
+        remoteReadyRef.current = false
         setRemoteReady(false)
         loadRemote(user.id).then((remote) => {
           dispatch({ type: 'RESTORE', payload: remote ?? { tasks: [], runningId: null, runningCallId: null } })
+          remoteReadyRef.current = true
           setRemoteReady(true)
         })
       }
@@ -296,6 +304,8 @@ export function useTaskTimer() {
     if (user && !prevUser) {
       // Just logged in — block saves until App.jsx calls reload() after handling
       // the migration offer (or calling reload() directly when no local data).
+      // Set the ref synchronously so the save effect below (same render commit) sees it.
+      remoteReadyRef.current = false
       setRemoteReady(false)
       return
     }
@@ -304,13 +314,16 @@ export function useTaskTimer() {
       // Just logged out — fall back to whatever is in localStorage (likely empty).
       const local = loadLocal()
       dispatch({ type: 'RESTORE', payload: local ?? { tasks: [], runningId: null, runningCallId: null } })
+      remoteReadyRef.current = true
       setRemoteReady(true)
     }
   }, [user])
 
   // ── Persistence save ──────────────────────────────────────────────────────
   useEffect(() => {
-    if (!remoteReady) return // don't overwrite remote data before initial load completes
+    // Use the ref (not state) so we catch the synchronous block set by the auth
+    // effect above even when both effects fire in the same render commit.
+    if (!remoteReadyRef.current) return
 
     const payload = {
       tasks: state.tasks,
@@ -327,6 +340,7 @@ export function useTaskTimer() {
 
   // ── reload — called by App.jsx after migration decision ───────────────────
   const reload = useCallback(async () => {
+    remoteReadyRef.current = false
     setRemoteReady(false)
     if (user) {
       const remote = await loadRemote(user.id)
@@ -335,6 +349,7 @@ export function useTaskTimer() {
       const local = loadLocal()
       dispatch({ type: 'RESTORE', payload: local ?? { tasks: [], runningId: null, runningCallId: null } })
     }
+    remoteReadyRef.current = true
     setRemoteReady(true)
   }, [user])
 
