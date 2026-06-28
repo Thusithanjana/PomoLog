@@ -85,7 +85,7 @@ export function TaskTable({
                         Resume
                       </button>
                     )}
-                    {isStopped && (
+                    {isStopped && !isBreakTime && (
                       <button
                         type="button"
                         className="table-action delete"
