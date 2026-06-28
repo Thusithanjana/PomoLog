@@ -141,6 +141,7 @@ button.ghost:hover:not(:disabled) {
   border-color: var(--ink-soft);
 }
 
+
 button:disabled {
   opacity: 0.4;
   cursor: not-allowed;
@@ -182,6 +183,54 @@ button.danger:hover:not(:disabled) {
   background: #a5030f;
 }
 
+/* ── Table action buttons ─────────────────────────────────── */
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+button.table-action {
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  border-radius: 6px;
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--ink-soft);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+button.table-action:hover:not(:disabled) {
+  background: var(--muted);
+  border-color: var(--charcoal);
+  color: var(--ink);
+}
+
+button.table-action.resume {
+  color: var(--leaf);
+  border-color: rgba(35, 142, 47, 0.35);
+}
+
+button.table-action.resume:hover:not(:disabled) {
+  background: #eef7ef;
+  border-color: var(--leaf);
+  color: var(--leaf-hover);
+}
+
+button.table-action.delete {
+  color: var(--brand);
+  border-color: rgba(252, 7, 25, 0.3);
+}
+
+button.table-action.delete:hover:not(:disabled) {
+  background: var(--brand-tint);
+  border-color: var(--brand);
+  color: var(--brand-hover);
+}
+
 /* ── Table ────────────────────────────────────────────────── */
 .table-wrap {
   overflow-x: auto;
@@ -215,9 +264,13 @@ thead th {
 tbody td {
   padding: 11px 12px;
   border-bottom: 1px solid var(--border);
-  vertical-align: top;
+  vertical-align: middle;
   font-size: 14px;
   color: var(--ink);
+}
+
+tbody td.actions-cell {
+  white-space: nowrap;
 }
 
 tbody tr:last-child td {

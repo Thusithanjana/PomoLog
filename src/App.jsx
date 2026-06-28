@@ -16,6 +16,7 @@ import { useNowTicker } from './hooks/useNowTicker'
 import { usePomodoroTimer } from './hooks/usePomodoroTimer'
 import { useTaskTimer } from './hooks/useTaskTimer'
 import { clearLocal, hasLocalDataToday, migrateLocalToRemote } from './lib/storage'
+import { BREAK_STATE_KEY } from './constants/storage'
 import { writeTimeEntry } from './lib/groups'
 import { downloadCsv } from './utils/csv'
 import { notifyTimerComplete } from './utils/notification'
@@ -36,6 +37,7 @@ function App() {
     isTaskRunning,
     isCallRunning,
     isAnyRunning,
+    remoteReady,
     reload,
     setDescription,
     startTask,
@@ -44,6 +46,7 @@ function App() {
     startCall,
     stopCall,
     updateTaskDescription,
+    deleteTask,
     setStatus,
     setUsePomodo,
     setPomodoroFocusMinutes,
@@ -103,7 +106,9 @@ function App() {
   const [breakModalMode, setBreakModalMode] = useState('auto')
   const [showBreakFinishedModal, setShowBreakFinishedModal] = useState(false)
   const [showConcurrentWarning, setShowConcurrentWarning] = useState(false)
-  const [breakTaskId, setBreakTaskId] = useState(null)
+  const [breakTaskId, setBreakTaskId] = useState(
+    () => localStorage.getItem(BREAK_STATE_KEY) ?? null,
+  )
 
   const nowMs = useNowTicker(isAnyRunning)
 
@@ -171,6 +176,87 @@ function App() {
     }, [isTaskRunning, runningTask, breakTaskId, breakTask, setStatus]),
     activeFocusMinutes,
   )
+
+  // Persist breakTaskId to localStorage so it survives tab/browser close.
+  useEffect(() => {
+    if (breakTaskId) {
+      localStorage.setItem(BREAK_STATE_KEY, breakTaskId)
+    } else {
+      localStorage.removeItem(BREAK_STATE_KEY)
+    }
+  }, [breakTaskId])
+
+  // Sync focus timer to wall-clock elapsed time whenever the running task changes.
+  // This corrects the countdown after a page reload — without this the timer would
+  // restart from the full focus duration regardless of how much time had already passed.
+  const syncedRunningIdRef = useRef(null)
+  useEffect(() => {
+    if (!remoteReady) return
+    if (runningId === syncedRunningIdRef.current) return
+    syncedRunningIdRef.current = runningId
+
+    if (!runningId || !runningTask?.usePomodo) return
+
+    const currentSession = runningTask.pomodoroSessions?.findLast?.((s) => !s.endISO)
+      ?? [...(runningTask.pomodoroSessions ?? [])].reverse().find((s) => !s.endISO)
+    if (!currentSession) return
+
+    const sessionBreakMs = currentSession.breaks?.reduce((sum, b) => sum + (b.duration ?? 0), 0) ?? 0
+    const elapsed = Date.now() - new Date(currentSession.startISO).getTime() - sessionBreakMs
+    const remaining = (runningTask.pomodoroFocusMinutes * 60 * 1000) - elapsed
+
+    if (remaining <= 0) {
+      pomodoroTimer.syncTimer(0)
+      notifyTimerComplete(runningTask.description)
+      setTimeout(() => {
+        setBreakModalMode('auto')
+        setShowBreakModal(true)
+      }, 0)
+    } else {
+      pomodoroTimer.syncTimer(remaining)
+    }
+  }, [remoteReady, runningId, runningTask, pomodoroTimer])
+
+  // Restore break timer after a page reload when breakTaskId was persisted.
+  const breakRestoredRef = useRef(false)
+  useEffect(() => {
+    if (breakRestoredRef.current) return
+    if (!remoteReady) return
+
+    breakRestoredRef.current = true
+
+    if (!breakTaskId) return
+
+    const bTask = tasks.find((t) => t.id === breakTaskId)
+    if (!bTask) {
+      setTimeout(() => setBreakTaskId(null), 0)
+      return
+    }
+
+    const lastSession = bTask.pomodoroSessions?.at(-1)
+      ?? [...(bTask.pomodoroSessions ?? [])].at(-1)
+    const lastBreak = lastSession?.breaks?.at(-1)
+      ?? [...(lastSession?.breaks ?? [])].at(-1)
+
+    if (!lastBreak) {
+      setTimeout(() => setBreakTaskId(null), 0)
+      return
+    }
+
+    const elapsed = Date.now() - new Date(lastBreak.startISO).getTime()
+    const remaining = (lastBreak.duration ?? 0) - elapsed
+
+    if (remaining <= 0) {
+      setTimeout(() => {
+        setBreakTaskId(null)
+        setShowBreakFinishedModal(true)
+        setStatus('Break finished while you were away. Resume your task when ready.')
+      }, 0)
+    } else {
+      pomodoroTimer.selectBreak(lastBreak.type, remaining)
+      setTimeout(() => setStatus('Break timer restored.'), 0)
+    }
+  }, [remoteReady, breakTaskId, tasks, pomodoroTimer, setStatus])
 
   const handleTakeBreak = useCallback(() => {
     if (!isTaskRunning || !runningTask?.usePomodo) return
@@ -424,6 +510,9 @@ function App() {
           runningCallId={runningCallId}
           nowMs={nowMs}
           onEdit={handleEditOpen}
+          onDelete={deleteTask}
+          onResume={resumeTask}
+          isAnyRunning={isAnyRunning}
           breakTaskId={breakTaskId}
           isBreakTime={pomodoroTimer.isBreakTime}
           breakTimeRemaining={pomodoroTimer.timeRemaining}

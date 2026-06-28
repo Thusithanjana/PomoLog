@@ -9,6 +9,9 @@ export function TaskTable({
   runningCallId,
   nowMs,
   onEdit,
+  onDelete,
+  onResume,
+  isAnyRunning,
   breakTaskId,
   isBreakTime,
   breakTimeRemaining,
@@ -18,12 +21,12 @@ export function TaskTable({
       <table aria-label="Task log table">
         <thead>
           <tr>
-            <th style={{ width: 60 }}>No</th>
+            <th style={{ width: 48 }}>No</th>
             <th>Description</th>
             <th className="nowrap">Start Time</th>
             <th className="nowrap">End Time</th>
             <th className="nowrap">Duration</th>
-            <th style={{ width: 140 }}>Actions</th>
+            <th style={{ width: 160 }}>Actions</th>
           </tr>
         </thead>
 
@@ -45,7 +48,12 @@ export function TaskTable({
               ? `Focus: ${pomodoroStats.focus}m | Breaks: ${pomodoroStats.breaks}m | Total: ${pomodoroStats.total}m`
               : duration
 
-            return (
+            const isRunning = task.id === runningId || task.id === runningCallId
+          const isCall = task.description === 'Call -'
+          const isStopped = Boolean(task.endISO) && !isRunning
+          const canResume = isStopped && !isCall && !isAnyRunning
+
+          return (
               <tr key={task.id} className={isOnBreak ? 'break-row' : ''}>
                 <td>{no}</td>
                 <td>
@@ -59,14 +67,34 @@ export function TaskTable({
                     ? `Break: ${msToMMSS(breakTimeRemaining)} left`
                     : displayDuration}
                 </td>
-                <td>
-                  <button
-                    type="button"
-                    className="ghost"
-                    onClick={() => onEdit(task.id)}
-                  >
-                    Edit
-                  </button>
+                <td className="actions-cell">
+                  <div className="table-actions">
+                    <button
+                      type="button"
+                      className="table-action"
+                      onClick={() => onEdit(task.id)}
+                    >
+                      Edit
+                    </button>
+                    {canResume && (
+                      <button
+                        type="button"
+                        className="table-action resume"
+                        onClick={() => onResume(task.id)}
+                      >
+                        Resume
+                      </button>
+                    )}
+                    {isStopped && (
+                      <button
+                        type="button"
+                        className="table-action delete"
+                        onClick={() => onDelete(task.id)}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             )

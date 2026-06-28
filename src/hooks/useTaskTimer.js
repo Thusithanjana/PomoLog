@@ -245,6 +245,16 @@ function reducer(state, action) {
       return { ...state, pomodoroFocusMinutes: action.payload }
     }
 
+    case 'DELETE_TASK': {
+      const updatedTasks = state.tasks.filter((task) => task.id !== action.payload.taskId)
+      const wasRunning = state.runningId === action.payload.taskId
+      return {
+        ...state,
+        tasks: updatedTasks,
+        runningId: wasRunning ? null : state.runningId,
+      }
+    }
+
     default:
       return state
   }
@@ -446,6 +456,10 @@ export function useTaskTimer() {
     })
   }, [])
 
+  const deleteTask = useCallback((taskId) => {
+    dispatch({ type: 'DELETE_TASK', payload: { taskId } })
+  }, [])
+
   const isTaskRunning = Boolean(state.runningId)
   const isCallRunning = Boolean(state.runningCallId)
 
@@ -457,6 +471,7 @@ export function useTaskTimer() {
     isTaskRunning,
     isCallRunning,
     isAnyRunning: isTaskRunning || isCallRunning,
+    remoteReady,
     reload,
     setDescription,
     startTask,
@@ -465,6 +480,7 @@ export function useTaskTimer() {
     startCall,
     stopCall,
     updateTaskDescription,
+    deleteTask,
     setStatus,
     setUsePomodo,
     setPomodoroFocusMinutes,

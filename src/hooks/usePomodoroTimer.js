@@ -39,15 +39,19 @@ export function usePomodoroTimer(isTaskRunning, onBreakRequired, focusMinutes = 
     return () => clearInterval(intervalId)
   }, [isTaskRunning, isBreakTime, onBreakRequired])
 
-  const selectBreak = useCallback((breakType) => {
+  const selectBreak = useCallback((breakType, remainingMs = null) => {
     setIsBreakTime(true)
-    const duration = breakType === 'short' ? POMODORO_PRESETS.SHORT_BREAK : POMODORO_PRESETS.LONG_BREAK
+    const fullDuration = breakType === 'short' ? POMODORO_PRESETS.SHORT_BREAK : POMODORO_PRESETS.LONG_BREAK
     setBreakDuration({
       type: breakType,
-      ms: duration,
+      ms: fullDuration,
     })
-    setTimeRemaining(duration)
+    setTimeRemaining(remainingMs ?? fullDuration)
     setHasCompleted(false)
+  }, [])
+
+  const syncTimer = useCallback((ms) => {
+    setTimeRemaining(Math.max(0, ms))
   }, [])
 
   const skipBreak = useCallback(() => {
@@ -73,5 +77,6 @@ export function usePomodoroTimer(isTaskRunning, onBreakRequired, focusMinutes = 
     selectBreak,
     skipBreak,
     resetTimer,
+    syncTimer,
   }
 }
