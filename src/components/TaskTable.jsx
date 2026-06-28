@@ -51,7 +51,7 @@ export function TaskTable({
             const isRunning = task.id === runningId || task.id === runningCallId
           const isCall = task.description === 'Call -'
           const isStopped = Boolean(task.endISO) && !isRunning
-          const canResume = isStopped && !isCall && !isAnyRunning
+          const canResume = isStopped && !isCall && !isAnyRunning && !isBreakTime
 
           return (
               <tr key={task.id} className={isOnBreak ? 'break-row' : ''}>

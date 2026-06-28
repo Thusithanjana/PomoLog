@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { deleteTimeEntry } from '../lib/groups'
 import {
   loadLocal,
   loadRemote,
@@ -542,9 +543,13 @@ export function useTaskTimer() {
   }, [])
 
   const deleteTask = useCallback((taskId) => {
+    const task = state.tasks.find((t) => t.id === taskId)
     dispatch({ type: 'DELETE_TASK', payload: { taskId, deletedAt: nowISO() } })
-    if (user) softDeleteTaskRemote(user.id, taskId)
-  }, [user])
+    if (user) {
+      softDeleteTaskRemote(user.id, taskId)
+      if (task?.startISO) deleteTimeEntry(user.id, task.startISO)
+    }
+  }, [user, state.tasks])
 
   const isTaskRunning = Boolean(state.runningId)
   const isCallRunning = Boolean(state.runningCallId)

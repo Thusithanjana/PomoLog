@@ -56,6 +56,17 @@ export async function writeTimeEntry(userId, { taskLabel, startedAt, durationSec
   if (error) console.error('[PomoLog] writeTimeEntry failed:', error.message, error)
 }
 
+/** Removes the time_entry written when this task was stopped. Matched by started_at (= task startISO). */
+export async function deleteTimeEntry(userId, startedAt) {
+  if (!supabase) return
+  const { error } = await supabase
+    .from('time_entries')
+    .delete()
+    .eq('user_id', userId)
+    .eq('started_at', startedAt)
+  if (error) console.error('[PomoLog] deleteTimeEntry failed:', error.message)
+}
+
 export async function fetchGroupEntries(groupId, sinceISO) {
   if (!supabase) return []
   const { data, error } = await supabase
