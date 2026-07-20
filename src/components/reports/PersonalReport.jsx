@@ -222,7 +222,7 @@ export function PersonalReport() {
   if (staticLoading) return <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>Loading your stats…</p>
 
   return (
-    <div style={{ display: 'grid', gap: '24px' }}>
+    <div style={{ display: 'grid', gap: '24px', minWidth: 0 }}>
 
       {/* Streak */}
       <div>
@@ -262,7 +262,7 @@ export function PersonalReport() {
       ) : (
         <>
           {/* Summary stats */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(120px, 100%), 1fr))', gap: '10px', minWidth: 0 }}>
             <StatCard label="Total hours" value={fmtHours(summary.totalSeconds)} />
             <StatCard label="Sessions" value={summary.sessions} />
             <StatCard label="Unique tasks" value={summary.uniqueTasks} />
@@ -275,13 +275,14 @@ export function PersonalReport() {
             {topTaskRows.length === 0 ? (
               <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>No sessions logged in this period.</p>
             ) : (
-              <div style={{ display: 'grid', gap: '6px' }}>
+              <div style={{ display: 'grid', gap: '6px', minWidth: 0 }}>
                 {topTaskRows.map((row, i) => (
                   <div key={row.task_label} style={{
                     padding: '10px 12px', borderRadius: '8px',
                     border: '1px solid var(--border)', background: 'var(--bg)',
+                    minWidth: 0,
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
                       <span style={{
                         width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
                         background: i < 3 ? 'var(--brand)' : 'var(--border)',
@@ -291,7 +292,7 @@ export function PersonalReport() {
                       }}>
                         {i + 1}
                       </span>
-                      <span style={{ fontSize: '14px', color: 'var(--ink)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '14px', color: 'var(--ink)', flex: 1, minWidth: 0, overflowWrap: 'anywhere', lineHeight: 1.35 }}>
                         {row.task_label}
                       </span>
                       <span style={{ fontSize: '11px', color: 'var(--ink-soft)', flexShrink: 0, marginRight: '8px' }}>
@@ -316,10 +317,10 @@ export function PersonalReport() {
             {dailyRows.length === 0 ? (
               <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>No sessions logged in this period.</p>
             ) : (
-              <div style={{ display: 'grid', gap: '0', border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
+              <div style={{ display: 'grid', gap: '0', border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden', minWidth: 0 }}>
                 {/* header */}
                 <div style={{
-                  display: 'grid', gridTemplateColumns: '1fr 70px 60px',
+                  display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 70px 60px',
                   padding: '8px 12px', background: 'var(--brand-tint)',
                   fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
                   letterSpacing: '0.5px', color: 'var(--ink-soft)',
@@ -330,14 +331,14 @@ export function PersonalReport() {
                 </div>
                 {dailyRows.map((row, i) => (
                   <div key={row.date} style={{
-                    display: 'grid', gridTemplateColumns: '1fr 70px 60px',
+                    display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 70px 60px',
                     padding: '10px 12px', alignItems: 'start',
                     borderTop: i === 0 ? 'none' : '1px solid var(--border)',
                     background: i % 2 === 0 ? 'var(--bg)' : 'transparent',
                   }}>
-                    <div>
+                    <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--charcoal)' }}>{row.date}</div>
-                      <div style={{ fontSize: '11px', color: 'var(--ink-soft)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontSize: '11px', color: 'var(--ink-soft)', marginTop: '2px', overflowWrap: 'anywhere', lineHeight: 1.35 }}>
                         {row.tasks.slice(0, 3).join(' · ')}{row.tasks.length > 3 ? ` +${row.tasks.length - 3} more` : ''}
                       </div>
                     </div>

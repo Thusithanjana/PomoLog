@@ -17,10 +17,10 @@ export function ReportsDashboard() {
 
   return (
     <section className="panel">
-      <div style={{ padding: '20px', display: 'grid', gap: '20px' }}>
+      <div style={{ padding: '20px', display: 'grid', gap: '20px', minWidth: 0 }}>
 
         {/* Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap', minWidth: 0 }}>
           <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--charcoal)' }}>Reports</h2>
           <div style={{ display: 'flex', gap: '6px' }}>
             {['personal', 'group'].map((t) => {

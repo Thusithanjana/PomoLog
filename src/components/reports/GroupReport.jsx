@@ -148,7 +148,7 @@ export function GroupReport({ groupId }) {
   const handlePdf = () => exportGroupToPdf({ groupName, periodLabel, leaderboardRows: lbRows, taskRows: tbRows })
 
   return (
-    <div style={{ display: 'grid', gap: '24px' }}>
+    <div style={{ display: 'grid', gap: '24px', minWidth: 0 }}>
 
       {/* Period filter + export */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
@@ -175,13 +175,14 @@ export function GroupReport({ groupId }) {
             {leaderboard.length === 0 ? (
               <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>No entries logged this week.</p>
             ) : (
-              <div style={{ display: 'grid', gap: '6px' }}>
+              <div style={{ display: 'grid', gap: '6px', minWidth: 0 }}>
                 {leaderboard.map((row, i) => (
                   <div key={row.user_id} style={{
                     padding: '10px 12px', borderRadius: '8px',
                     border: '1px solid var(--border)', background: 'var(--bg)',
+                    minWidth: 0,
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
                       <span style={{
                         width: '20px', height: '20px', borderRadius: '50%', flexShrink: 0,
                         background: MEDAL[i] ?? 'var(--border)',
@@ -191,7 +192,7 @@ export function GroupReport({ groupId }) {
                       }}>
                         {i + 1}
                       </span>
-                      <span style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '14px', color: 'var(--ink)', fontWeight: 600, flex: 1, minWidth: 0, overflowWrap: 'anywhere', lineHeight: 1.35 }}>
                         {row.nickname}
                       </span>
                       <span style={{ fontSize: '14px', fontWeight: 600, color: Number(row.total_seconds) > 0 ? 'var(--brand)' : 'var(--ink-soft)', flexShrink: 0 }}>
@@ -216,11 +217,11 @@ export function GroupReport({ groupId }) {
             {tasks.length === 0 ? (
               <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>No entries logged this week.</p>
             ) : (
-              <div style={{ display: 'grid', gap: '8px' }}>
+              <div style={{ display: 'grid', gap: '8px', minWidth: 0 }}>
                 {tasks.map((row) => (
-                  <div key={row.task_label}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', alignItems: 'baseline' }}>
-                      <span style={{ color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '65%' }}>
+                  <div key={row.task_label} style={{ minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', alignItems: 'baseline', gap: '8px', minWidth: 0 }}>
+                      <span style={{ color: 'var(--ink)', overflowWrap: 'anywhere', lineHeight: 1.35, minWidth: 0 }}>
                         {row.task_label}
                       </span>
                       <div style={{ display: 'flex', gap: '12px', flexShrink: 0, marginLeft: '8px', alignItems: 'baseline' }}>
@@ -249,9 +250,9 @@ export function GroupReport({ groupId }) {
         ) : entries.length === 0 ? (
           <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>No activity in this period.</p>
         ) : (
-          <div style={{ display: 'grid', gap: '0', border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden' }}>
+          <div style={{ display: 'grid', gap: '0', border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden', minWidth: 0 }}>
             <div style={{
-              display: 'grid', gridTemplateColumns: '1fr 100px 60px',
+              display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 100px 60px',
               padding: '8px 12px', background: 'var(--brand-tint)',
               fontSize: '11px', fontWeight: 700, textTransform: 'uppercase',
               letterSpacing: '0.5px', color: 'var(--ink-soft)',
@@ -262,13 +263,13 @@ export function GroupReport({ groupId }) {
             </div>
             {entries.slice(0, 50).map((entry, i) => (
               <div key={entry.id} style={{
-                display: 'grid', gridTemplateColumns: '1fr 100px 60px',
+                display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 100px 60px',
                 padding: '9px 12px', alignItems: 'center',
                 borderTop: '1px solid var(--border)',
                 background: i % 2 === 0 ? 'var(--bg)' : 'transparent',
               }}>
-                <div>
-                  <div style={{ fontSize: '13px', color: 'var(--charcoal)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: '13px', color: 'var(--charcoal)', overflowWrap: 'anywhere', lineHeight: 1.35 }}>
                     {entry.task_label}
                   </div>
                   <div style={{ marginTop: '3px' }}>
