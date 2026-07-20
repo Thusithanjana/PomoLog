@@ -60,6 +60,7 @@ export function ReportsDashboard() {
 
         {tab === 'personal' && <PersonalReport />}
         {tab === 'group' && <GroupReport groupId={activeGroupId} />}
+        <h1>this is a test</h1>
       </div>
     </section>
   )
