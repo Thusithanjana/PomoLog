@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react'
-import { fetchGroupLeaderboard, fetchGroupTaskBreakdown } from '../../lib/reports'
+import { useEffect, useMemo, useState } from 'react'
 import { fetchGroupEntries } from '../../lib/groups'
 import { exportGroupToExcel, exportGroupToPdf } from '../../utils/export'
 import { useGroups } from '../../hooks/useGroups'
@@ -101,25 +100,9 @@ export function GroupReport({ groupId }) {
 
   const [period, setPeriod] = useState('week')
 
-  // Leaderboard + task breakdown — re-fetched when groupId changes
-  // These use RPCs that are period-aware internally (this week / all-time)
-  const [leaderboard, setLeaderboard] = useState([])
-  const [tasks, setTasks] = useState([])
-  const [lbLoading, setLbLoading] = useState(false)
-
-  // Recent entries — re-fetched when groupId or period changes
+  // Recent entries drive the period-sensitive activity, leaderboard, and task breakdown.
   const [entries, setEntries] = useState([])
   const [entriesLoading, setEntriesLoading] = useState(false)
-
-  useEffect(() => {
-    if (!groupId) return
-    setLbLoading(true)
-    Promise.all([fetchGroupLeaderboard(groupId), fetchGroupTaskBreakdown(groupId)]).then(([lb, tb]) => {
-      setLeaderboard(lb)
-      setTasks(tb)
-      setLbLoading(false)
-    })
-  }, [groupId])
 
   useEffect(() => {
     if (!groupId) return
@@ -135,6 +118,55 @@ export function GroupReport({ groupId }) {
   )
 
   const periodLabel = PERIODS.find((p) => p.key === period)?.label ?? period
+
+  const memberNames = useMemo(() => {
+    const group = groups.find((g) => g.id === groupId)
+    return Object.fromEntries((group?.group_members ?? []).map((member) => [
+      member.user_id,
+      member.nickname || member.user_id.slice(0, 8),
+    ]))
+  }, [groups, groupId])
+
+  const { leaderboard, tasks } = useMemo(() => {
+    const byUser = {}
+    const byTask = {}
+
+    for (const entry of entries) {
+      const duration = Number(entry.duration_seconds)
+
+      if (!byUser[entry.user_id]) {
+        byUser[entry.user_id] = {
+          user_id: entry.user_id,
+          nickname: memberNames[entry.user_id] ?? entry.user_id.slice(0, 8),
+          total_seconds: 0,
+          entry_count: 0,
+        }
+      }
+      byUser[entry.user_id].total_seconds += duration
+      byUser[entry.user_id].entry_count += 1
+
+      if (!byTask[entry.task_label]) {
+        byTask[entry.task_label] = {
+          task_label: entry.task_label,
+          total_seconds: 0,
+          contributors: new Set(),
+        }
+      }
+      byTask[entry.task_label].total_seconds += duration
+      byTask[entry.task_label].contributors.add(entry.user_id)
+    }
+
+    return {
+      leaderboard: Object.values(byUser).sort((a, b) => b.total_seconds - a.total_seconds),
+      tasks: Object.values(byTask)
+        .map((task) => ({
+          task_label: task.task_label,
+          total_seconds: task.total_seconds,
+          contributor_count: task.contributors.size,
+        }))
+        .sort((a, b) => b.total_seconds - a.total_seconds),
+    }
+  }, [entries, memberNames])
 
   const maxLbSec = Math.max(...leaderboard.map((r) => Number(r.total_seconds)), 1)
   const maxTaskSec = Math.max(...tasks.map((r) => Number(r.total_seconds)), 1)
@@ -167,13 +199,13 @@ export function GroupReport({ groupId }) {
         <ExportMenu onExcel={handleExcel} onPdf={handlePdf} />
       </div>
 
-      {lbLoading ? <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>Loading group stats…</p> : (
+      {entriesLoading ? <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>Loading group stats…</p> : (
         <>
           {/* Leaderboard */}
           <div>
-            <div style={{ ...LABEL, marginBottom: '10px' }}>Leaderboard — this week</div>
+            <div style={{ ...LABEL, marginBottom: '10px' }}>Leaderboard — {periodLabel}</div>
             {leaderboard.length === 0 ? (
-              <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>No entries logged this week.</p>
+              <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>No entries logged in this period.</p>
             ) : (
               <div style={{ display: 'grid', gap: '6px', minWidth: 0 }}>
                 {leaderboard.map((row, i) => (
@@ -213,9 +245,9 @@ export function GroupReport({ groupId }) {
 
           {/* Task breakdown */}
           <div>
-            <div style={{ ...LABEL, marginBottom: '10px' }}>Time per task — this week</div>
+            <div style={{ ...LABEL, marginBottom: '10px' }}>Time per task — {periodLabel}</div>
             {tasks.length === 0 ? (
-              <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>No entries logged this week.</p>
+              <p style={{ color: 'var(--ink-soft)', fontSize: '14px', margin: 0 }}>No entries logged in this period.</p>
             ) : (
               <div style={{ display: 'grid', gap: '8px', minWidth: 0 }}>
                 {tasks.map((row) => (
